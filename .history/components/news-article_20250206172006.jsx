@@ -108,8 +108,9 @@ export default function NewsArticle({id}) {
             exit={{ opacity: 0, x: 20 }}
             transition={{ duration: 0.3 }}
             className="container mx-auto px-4 py-6 max-w-3xl">
-            <Logo />              
-
+            <header className="mb-6">
+              <h1 className="text-2xl font-bold text-[#0B3558]">DIGINEWS</h1>
+            </header>
 
             <Card  onClick={toggleEdit}  className="mb-6 cursor-pointer hover:bg-gray-100">
               <CardHeader className="flex flex-row items-center gap-4 p-4">

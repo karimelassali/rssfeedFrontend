@@ -7,7 +7,6 @@ import { Card, CardHeader } from "@/components/ui/card"
 import { Edit2 } from "lucide-react"
 import Image from "next/image"
 import axios from "axios"
-import { Logo } from "./ui/logo"
 
 export default function NewsArticle({id}) {
   const [isEditing, setIsEditing] = useState(false)
@@ -66,8 +65,8 @@ export default function NewsArticle({id}) {
             transition={{ duration: 0.3 }}
             className="container mx-auto px-4 py-6 max-w-3xl">
             <header className="mb-6">
-            <Logo />              
-            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <h1 className="text-2xl font-bold text-[#0B3558] mb-2">DIGINEWS</h1>
+              <div className="flex items-center gap-2 text-sm text-gray-600">
               <span className="source-tag bg-green-100 text-green-800 px-2 py-0.5 rounded">
                 {articleData.source ? articleData.source.split('/').pop() : 'Loading...'}
               </span>
@@ -108,8 +107,9 @@ export default function NewsArticle({id}) {
             exit={{ opacity: 0, x: 20 }}
             transition={{ duration: 0.3 }}
             className="container mx-auto px-4 py-6 max-w-3xl">
-            <Logo />              
-
+            <header className="mb-6">
+              <h1 className="text-2xl font-bold text-[#0B3558]">DIGINEWS</h1>
+            </header>
 
             <Card  onClick={toggleEdit}  className="mb-6 cursor-pointer hover:bg-gray-100">
               <CardHeader className="flex flex-row items-center gap-4 p-4">
@@ -188,7 +188,7 @@ export default function NewsArticle({id}) {
             </div>
 
             <div className="flex gap-4">
-              <Button variant="outline" onClick={toggleAiModification} style={{backgroundColor: "#093F5A"}} className="flex-1 text-white py-6">
+              <Button variant="outline" onClick={toggleAiModification} style={{backg}} className="flex-1 py-6">
                 {aiModification ? "Save" : "Modifica"}
               </Button>
               <Button className="flex-1 py-6 bg-green-500 hover:bg-green-600">Continua</Button>

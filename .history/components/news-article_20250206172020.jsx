@@ -108,7 +108,7 @@ export default function NewsArticle({id}) {
             exit={{ opacity: 0, x: 20 }}
             transition={{ duration: 0.3 }}
             className="container mx-auto px-4 py-6 max-w-3xl">
-            <Logo />              
+                        <Logo />              
 
 
             <Card  onClick={toggleEdit}  className="mb-6 cursor-pointer hover:bg-gray-100">
