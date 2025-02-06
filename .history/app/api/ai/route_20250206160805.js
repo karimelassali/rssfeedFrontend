@@ -1,0 +1,17 @@
+
+import axios from 'axios';
+import { NextResponse } from 'next/server';
+
+export async function POST(req) {
+  const { articleTitle,articleDescription } = await req.json();
+
+  try {
+    adminPrompt = 'ALways summurize this feed descreption in 5-9 lines and extract its location.here its the prompt:';
+        $response = Http::post('C, [
+          const response = axios.post('')
+    
+  } catch (error) {
+    console.error('Error generating AI response:', error);
+  }
+
+}

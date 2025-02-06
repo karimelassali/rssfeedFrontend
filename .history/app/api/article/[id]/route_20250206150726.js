@@ -1,0 +1,26 @@
+/*************  ✨ Codeium Command 🌟  *************/
+import { NextResponse } from "next/server";
+import axios from "axios";
+import NodeCache from "node-cache";
+
+// Create a cache instance with a TTL of 1 hour (3600 seconds)
+
+export async function GET() {
+  const cacheKey = "apiData";
+  // const cachedData = cache.get(cacheKey);
+
+  // if (cachedData) {
+  //   // Return cached data if available
+  //   return NextResponse.json(cachedData);
+  // }
+
+  // Fetch data from the API if not cached
+  const response = await axios.get("http://127.0.0.1:8000/api/data/" + 3);
+  const data = response.data;
+
+  // Store the fetched data in the cache
+  // cache.set(cacheKey, data);
+
+  return NextResponse.json(data);
+} 
+/******  fa6c6253-b03b-432d-b601-db87705d37cb  *******/
