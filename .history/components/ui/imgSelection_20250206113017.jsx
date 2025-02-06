@@ -1,3 +1,4 @@
+/*************  ✨ Codeium Command 🌟  *************/
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 
@@ -12,8 +13,10 @@ const WordPressImageFetcher = ({ apiUrl }) => {
             'Content-Type': 'application/json',
           },
         });
+        const response = await axios.get(`${apiUrl}/wp-json/wp/v2/media?per_page=100`);
         const imageUrls = response.data.map(image => ({
           src: image.media_details.sizes.full.source_url,
+          src: image.source_url,
           alt: image.alt_text || 'WordPress Image'
         }));
         setImages(imageUrls);
@@ -36,3 +39,5 @@ const WordPressImageFetcher = ({ apiUrl }) => {
 
 export default WordPressImageFetcher;
 
+
+/******  f05a688d-3e8d-420c-b618-79f6e1c4eab0  *******/
