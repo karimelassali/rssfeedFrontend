@@ -11,6 +11,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import { ImageUploadModal } from "./image-upload-modal"
+import { Logo } from "./ui/logo"
+import axios from "axios"
 
 const categories = [
   { id: "cronaca", name: "Cronaca" },
@@ -29,7 +31,7 @@ const categories = [
   { id: "archivio", name: "Archivio" },
 ]
 
-export default function PublishingWizard({articleData}) {
+export default function PublishingWizard({articleData,anulling}) {
   const [step, setStep] = React.useState(1)
   const [imageModalOpen, setImageModalOpen] = React.useState(false)
   const [formData, setFormData] = React.useState({
@@ -40,6 +42,10 @@ export default function PublishingWizard({articleData}) {
     date: "",
     time: "",
   })
+  const [publishingState, setPublishingState] = React.useState({
+    response: null,
+    isClicked: false,
+  });
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -71,6 +77,21 @@ export default function PublishingWizard({articleData}) {
     return true
   }
 
+  const publicArticle = async (id) => {
+    try {
+      const response = await fetch(`http://localhost:3000/api/publish/${id}`, {
+        method: "POST",
+      });
+      const res = await response.json();
+      console.log("Response:", res); // تحقق من الرد
+      if (response.ok) {
+        setPublishingState({ response: res, isClicked: true });
+      }
+    } catch (error) {
+      console.error("Error publishing article:", error);
+    }
+  };
+  
   return (
     (<div className="min-h-screen bg-gray-50 p-4">
       <AnimatePresence mode="wait">
@@ -83,7 +104,7 @@ export default function PublishingWizard({articleData}) {
             className="mx-auto max-w-md">
             <Card className="overflow-hidden">
               <div className="border-b bg-gray-50 p-4">
-                <h2 className="text-base font-medium">DIGINEWS</h2>
+                <Logo />
               </div>
               <div className="space-y-4 p-4">
                 <div>
@@ -170,7 +191,7 @@ export default function PublishingWizard({articleData}) {
                 </div>
 
                 <div className="flex gap-2 pt-2">
-                  <Button variant="outline" className="flex-1" onClick={() => setStep(1)}>
+                  <Button variant="outline" className="flex-1" onClick={() => {setStep(1);anulling(true)}}>
                     Annulla
                   </Button>
                   <Button
@@ -237,7 +258,7 @@ export default function PublishingWizard({articleData}) {
             className="mx-auto max-w-md">
             <Card>
               <div className="border-b bg-gray-50 p-4">
-                <h2 className="text-base font-medium">DIGINEWS</h2>
+                <Logo />
               </div>
               <div className="space-y-4 p-4">
                 <div className="space-y-2">
@@ -255,16 +276,33 @@ export default function PublishingWizard({articleData}) {
                   <p className="text-sm text-gray-600">{articleData.description}</p>
                 </div>
                 <div className="flex gap-2 pt-2">
-                  <Button variant="outline" className="flex-1" onClick={handleBack}>
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={handleBack}
+                    disabled={publishingState.isClicked} // تعطيل الزر بعد النشر
+                  >
                     Modifica
                   </Button>
-                  <Button className="flex-1 bg-[#00C897] hover:bg-[#00B386]">Pubblica</Button>
-                </div>
+
+                  <Button
+                    className="flex-1 bg-[#00C897] hover:bg-[#00B386]"
+                    onClick={() => publicArticle(articleData.id)}
+                    disabled={publishingState.isClicked} // تعطيل الزر بعد النشر
+                  >
+                    {publishingState.isClicked ? "Pubblicato" : "Pubblica"}
+                  </Button>
+
+
+
+                  </div>
               </div>
             </Card>
           </motion.div>
         )}
       </AnimatePresence>
+
+      
       <ImageUploadModal
         open={imageModalOpen}
         onOpenChange={setImageModalOpen}

@@ -20,6 +20,7 @@ export default function NewsArticle({id}) {
   const [continuingButtons, setContinuingButtons] = useState({
     aiContinue: false,
   })
+  const [annulingEditing,setAnnulingEditing] = useState(false);
   const [aiResponse, setAiResponse] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const [showRegenerateButton, setShowRegenerateButton] = useState(false);
@@ -95,6 +96,21 @@ export default function NewsArticle({id}) {
     }
   }, [isEditing, articleData])
 
+  const annulingEditingListener = (data)=>{
+    setAnnulingEditing(true);
+    setTimeout(()=>{
+      setAnnulingEditing(false);
+    },2000)
+    setContinuingButtons(prev => ({
+      ...prev,
+      aiContinue:false,
+    }))
+  }
+
+  // useEffect(()=>{
+  //   console.log('anuuling =' + annulingEditing);
+  //   console.log('ai contu  = ' + continuingButtons.aiContinue);
+  // },[annulingEditing,continuingButtons.aiContinue])
   const renderMainArticleView = () => (
     <motion.div
       key="article"
@@ -105,6 +121,7 @@ export default function NewsArticle({id}) {
       className="container mx-auto px-4 py-6 max-w-3xl">
       <header className="mb-6">
         <Logo />              
+        {annulingEditing}
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <span className="source-tag bg-green-100 text-green-800 px-2 py-0.5 rounded">
             {articleData.source ? articleData.source.split('/').pop() : 'Loading...'}
@@ -130,12 +147,16 @@ export default function NewsArticle({id}) {
         <p className="mb-4">{articleData.description}</p>
       </div>
 
-      <Button
-        onClick={toggleEdit}
-        className="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-lg flex items-center justify-center gap-2">
-        <Edit2 className="w-4 h-4" />
-        Utilizza e rielabora
-      </Button>
+      {
+        articleData.title && articleData.description && (
+          <Button
+            onClick={toggleEdit}
+            className="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-lg flex items-center justify-center gap-2">
+            <Edit2 className="w-4 h-4" />
+            Utilizza e rielabora
+          </Button>
+        )
+      }
     </motion.div>
   )
 
@@ -269,7 +290,8 @@ export default function NewsArticle({id}) {
 
     // Default AI editing buttons
     return (
-      <div className="flex gap-4">
+      aiResponse && (
+        <div className="flex gap-4">
         <Button 
           variant="outline" 
           style={{backgroundColor: "#093F5A"}} 
@@ -284,12 +306,13 @@ export default function NewsArticle({id}) {
           Continua
         </Button>
       </div>
+      )
     )
   }
 
   // If aiContinue is true, render PublishingWizard
-  if (continuingButtons.aiContinue) {
-    return <PublishingWizard articleData={articleData} />
+  if (continuingButtons.aiContinue && !annulingEditing) {
+    return <PublishingWizard anulling={annulingEditingListener} articleData={articleData} />
   }
 
   return (
