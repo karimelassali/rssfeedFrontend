@@ -167,12 +167,7 @@ export default function DigiNews() {
             </div>
 
             {item.isPublished === 1 && (
-              <span className="absolute top-0 right-0 bg-orange-100 text-orange-600 px-2 py-0.5 rounded text-sm md:hidden block">
-                Pubblicata
-              </span>
-            )}
-            {item.isPublished === 1 && (
-              <span className="hidden md:block bg-orange-100 text-orange-600 px-2 py-0.5 rounded text-sm ml-4 mt-1">
+              <span className="absolute top-0 right-0 bg-orange-100 text-orange-600 px-2 py-0.5 rounded text-sm  block">
                 Pubblicata
               </span>
             )}
