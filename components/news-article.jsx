@@ -151,12 +151,14 @@ export default function NewsArticle({id}) {
 
       {
         articleData.title && articleData.description && (
-          <Button
-            onClick={toggleEdit}
-            className="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-lg flex items-center justify-center gap-2">
-            <Edit2 className="w-4 h-4" />
-            Utilizza e rielabora
-          </Button>
+          <div className="fixed bottom-0 left-0 right-0 p-4  dark:bg-gray-900 border-t dark:border-gray-700">
+            <Button
+              onClick={toggleEdit}
+              className="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-lg flex items-center justify-center gap-2">
+              <Edit2 className="w-4 h-4" />
+              Utilizza e rielabora
+            </Button>
+          </div>
         )
       }
       </motion.div>

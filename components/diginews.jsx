@@ -93,6 +93,22 @@ export default function DigiNews() {
     setSearchQuery("");
   };
 
+  const getTimeDifference = (pubDate) => {
+    const diff = (new Date().getTime() - new Date(pubDate).getTime()) / 1000;
+    const minutes = Math.ceil(diff / 60);
+    const hours = Math.ceil(minutes / 60);
+    const days = Math.ceil(hours / 24);
+  
+    if (days > 0) {
+      return `${days} ${days === 1 ? "giorno" : "giorni"} fa`;
+    } else if (hours > 0) {
+      return `${hours} ${hours === 1 ? "ora" : "ore"} fa`;
+    } else if (minutes > 0) {
+      return `${minutes} ${minutes === 1 ? "minuto" : "minuti"} fa`;
+    } else {
+      return "meno di 1 minuto fa";
+    }
+  };
   const renderContent = () => {
     if (isLoading && page === 1) {
       return <DigiNewsSkeleton />;
@@ -137,10 +153,9 @@ export default function DigiNews() {
                 <p className="text-sm font-medium mb-1 truncate">{item.source}</p>
                 <h2 className="text-base font-semibold mb-2 line-clamp-1">{item.title}</h2>
                 <p className="text-sm text-gray-500 truncate">
-                  {new Intl.RelativeTimeFormat("it").format(
-                    Math.ceil((new Date().getTime() - new Date(item.pubDate).getTime()) / 1000 / 60),
-                    "minutes"
-                  )}
+                  {
+                    getTimeDifference(item.pubDate)
+                  }
                 </p>
               </div>
 

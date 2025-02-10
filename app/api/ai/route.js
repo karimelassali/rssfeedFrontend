@@ -14,11 +14,11 @@ export async function POST(req) {
       );
     }
 
-    const prompt = `Summarize this article in a professional and structured way. Extract the location and provide a clean and concise title. Remove unnecessary labels like "Title:" or "Location:". Format the response as follows:
+    const prompt = `Summarize this article in a professional and structured way. Extract the location and provide a clean and concise title. Remove unnecessary labels like "Title:" or "Location:". Format the response as follows without any special characters or symbols:
 
-    - **Title:** [Your extracted title]
-    - **Location:** [Extracted location]
-    - **Summary:** [A clear, well-structured summary of 5-9 lines]
+    - Title: [Your extracted title]
+    - Location: [Extracted location]
+    - Summary: [A clear, well-structured summary of 5-9 lines]
 
     Title: ${articleTitle}
     Description: ${articleDescription}`;
