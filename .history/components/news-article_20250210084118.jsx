@@ -118,7 +118,7 @@ export default function NewsArticle({id}) {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
       transition={{ duration: 0.3 }}
-      className="container mx-auto  px-4 py-6 max-w-3xl">
+      className="container mx-auto px-4 py-6 max-w-3xl">
       <header className="mb-6">
         <Logo />              
         {annulingEditing}
@@ -211,8 +211,8 @@ export default function NewsArticle({id}) {
 
         {aiResponse ? (
           <div className="space-y-6">
-            <div className="flex bg-slate-100 rounded-md p-2 flex-col">
-              <div className="flex justify-between border-b border-slate-500 items-center mb-2">
+            <div>
+              <div className="flex justify-between items-center mb-2">
                 <h3 className="font-medium">Titolo</h3>
                 <Button 
                   onClick={() => handleViewOriginal('title')} 
@@ -223,13 +223,15 @@ export default function NewsArticle({id}) {
                   Vedi originale
                 </Button>
               </div>
-              <div className="w-full px-4 py-2 text-black  rounded-md overflow-wrap break-words">
-                {aiResponse.title}
-              </div>
+              <input
+                type="text"
+                value={articleData.title}
+                className="w-full px-4 py-2 text-gray-700 bg-gray-100 border border-gray-300 rounded-md"
+              />
             </div>
 
-            <div className='bg-slate-100 p-2 rounded' >
-              <div className="flex justify-between border-b border-slate-500 items-center mb-2">
+            <div>
+              <div className="flex justify-between items-center mb-2">
                 <h3 className="font-medium">Articolo</h3>
                 <Button 
                   onClick={() => handleViewOriginal('description')} 
@@ -240,11 +242,12 @@ export default function NewsArticle({id}) {
                   Vedi originale
                 </Button>
               </div>
-              <div
-                className="w-full px-4 py-2 text-black bg-transparent  rounded-md whitespace-pre-wrap break-words"
-              >
-                {aiResponse.description}
-              </div>
+              <textarea
+              on
+                value={aiResponse.candidates[0].content.parts[0].text}
+                rows={8}
+                className="w-full px-4 py-2 text-gray-700 bg-gray-100 border border-gray-300 rounded-md resize-none"
+              />
             </div>
           </div>
         ) : null}
@@ -270,10 +273,11 @@ export default function NewsArticle({id}) {
       return (
         <div className="flex gap-4">
           <Button 
-            // onClick={() => setContinuingButtons(prev => ({...prev, aiContinue: true}))}
-            className="flex-1 py-6 bg-dark-blue hover:bg-dark-blue"
+            onClick={regenerateAiResponse}
+            variant="outline" 
+            className="flex-1 py-6 border-blue-500 text-blue-500 hover:bg-blue-50"
           >
-            Modifica
+            Rigenera
           </Button>
           <Button 
             onClick={() => setContinuingButtons(prev => ({...prev, aiContinue: true}))}

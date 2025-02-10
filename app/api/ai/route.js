@@ -1,46 +1,91 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
 export async function POST(req) {
-  const { articleTitle, articleDescription } = await req.json();
-
   try {
-    const GEMINI_API_KEY = 'AIzaSyCuzOdhYrPyiZzLK7kKbz3xnt4oUK3jz8o';
+    const body = await req.json();
+    const { articleTitle, articleDescription } = body;
+
+    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
     if (!GEMINI_API_KEY) {
-      return NextResponse.json({ error: "GEMINI_API_KEY environment variable is not set" }, { status: 500 });
+      return NextResponse.json(
+        { error: "GEMINI_API_KEY is not set" },
+        { status: 500 }
+      );
     }
 
-    const prompt = `Always summarize this feed description in 5-9 lines and extract its location. Ensure the response is  without any additional formatting. Here is the prompt:\n\nTitle: ${articleTitle}\nDescription: ${articleDescription}`;
+    const prompt = `Summarize this article in a professional and structured way. Extract the location and provide a clean and concise title. Remove unnecessary labels like "Title:" or "Location:". Format the response as follows:
+
+    - **Title:** [Your extracted title]
+    - **Location:** [Extracted location]
+    - **Summary:** [A clear, well-structured summary of 5-9 lines]
+
+    Title: ${articleTitle}
+    Description: ${articleDescription}`;
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`,
       {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: prompt
-            }]
-          }]
-        })
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: prompt }],
+            },
+          ],
+        }),
       }
     );
 
     if (!response.ok) {
-      const errorData = await response.json(); // Try to get error details from the API
+      const errorData = await response.json();
       console.error("API Error:", errorData);
-      return NextResponse.json({ error: errorData.error.message || 'API request failed', status: response.status }, { status: response.status }); // Include status and error message
+      return NextResponse.json(
+        { error: errorData.error?.message || "API request failed" },
+        { status: response.status }
+      );
     }
 
-
     const data = await response.json();
-    return NextResponse.json(data);
+    const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
+    if (!generatedText) {
+      return NextResponse.json(
+        { error: "AI response is empty." },
+        { status: 500 }
+      );
+    }
+
+    // معالجة النص وتحسين التنسيق
+    let cleanedText = generatedText
+      .replace(/Title:\s*/i, "") // إزالة "Title:"
+      .replace(/Location:\s*/i, "") // إزالة "Location:"
+      .replace(/Description:\s*/i, "") // إزالة "Description:"
+      .trim(); // إزالة أي فراغات زائدة
+
+    // تقسيم النص إلى أقسام واضحة
+    const lines = cleanedText.split("\n").filter(line => line.trim() !== ""); // إزالة الأسطر الفارغة
+    const aiTitle = lines.shift(); // أول سطر هو العنوان
+    const aiLocation = lines.shift(); // ثاني سطر هو الموقع
+    const aiDescription = lines.join(" "); // باقي النص هو الوصف
+
+    return NextResponse.json(
+      {
+        title: aiTitle,
+        location: aiLocation,
+        description: aiDescription,
+      },
+      { status: 200 }
+    );
   } catch (error) {
-    console.error('Fetch Error:', error);
-      return NextResponse.json({ error: 'An unexpected error occurred.' }, { status: 500 });
+    console.error("Fetch Error:", error);
+    return NextResponse.json(
+      { error: "An unexpected error occurred." },
+      { status: 500 }
+    );
   }
 }
