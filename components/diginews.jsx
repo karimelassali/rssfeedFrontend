@@ -1,96 +1,101 @@
-import { useState, useEffect } from "react"
-import { Search, Filter, PenSquare, XCircle, X } from "lucide-react"
-import { FilterModal } from "./filter-modal"
-import axios from "axios"
-import Link from "next/link"
-import DigiNewsSkeleton from "./ui/skeletons/diginews"
+import { useState, useEffect } from "react";
+import { Search, Filter, XCircle, X, PenSquare, Loader2 } from "lucide-react";
+import axios from "axios";
+import Link from "next/link";
+import DigiNewsSkeleton from "./ui/skeletons/diginews";
+import { FilterModal } from "./filter-modal";
 
 export default function DigiNews() {
-  const [isFilterOpen, setIsFilterOpen] = useState(false)
-  const [activeFilters, setActiveFilters] = useState([])
-  const [data, setData] = useState([])
-  const [filteredData, setFilteredData] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [searchQuery, setSearchQuery] = useState("")
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [activeFilters, setActiveFilters] = useState([]);
+  const [data, setData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const PAGE_SIZE = 10;
 
-  // Fetch initial data
+  // Fetch data when page number changes
   useEffect(() => {
-    setIsLoading(true)
-    axios.get('api/test')
-      .then(response => {
-        setData(response.data)
-        setFilteredData(response.data)
-        setError(null)
-      })
-      .catch(error => {
-        console.error(error)
-        setError('Failed to load news data')
-      })
-      .finally(() => {
-        setIsLoading(false)
-      })
-  }, [])
+    const fetchData = async () => {
+      setIsLoadingMore(page > 1);  // Show loading indicator when fetching more
+      setIsLoading(page === 1);  // Show initial loading indicator for first page
 
-  // Extract domain name with improved error handling
-  const getDomainName = (url) => {
-    try {
-      const hostname = new URL(url).hostname
-      const domain = hostname.replace(/^www\./, '').split('.')[0]
-      return domain.toLowerCase()
-    } catch (error) {
-      console.error('Invalid URL:', url)
-      return ''
-    }
-  }
+      try {
+        const response = await axios.get(`/api/test?page=${page}&pageSize=${PAGE_SIZE}`);
+        const newData = response.data.data;
 
-  // Combined search and filter function
+        if (newData.length < PAGE_SIZE) {
+          setHasMore(false);  // No more data to load
+        }
+
+        // Append new data to existing data state
+        setData((prevData) => {
+          if (page === 1) {
+            return newData;  // Replace initial data
+          } else {
+            return [...prevData, ...newData];  // Append new data
+          }
+        });
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        setError("Failed to load news data");
+      } finally {
+        setIsLoading(false);
+        setIsLoadingMore(false);
+      }
+    };
+
+    fetchData();
+  }, [page]);
+
+  // Filtering and searching logic
   const filterAndSearchData = (items, filters, query) => {
-    return items.filter(item => {
-      // Source filter check
-      const domainMatch = filters.length === 0 || filters.includes(getDomainName(item.source))
-      
-      // Search query check (if query exists)
-      const searchMatch = !query || [
-        item.title,
-        item.source,
-        // Add any other fields you want to search through
-      ].some(field => 
-        field?.toLowerCase().includes(query.toLowerCase())
-      )
+    return items.filter((item) => {
+      const domainMatch = filters.length === 0 || filters.includes(item.source);
+      const searchMatch =
+        !query ||
+        [item.title, item.source].some((field) =>
+          field.toLowerCase().includes(query.toLowerCase())
+        );
+      return domainMatch && searchMatch;
+    });
+  };
 
-      return domainMatch && searchMatch
-    })
-  }
-
-  // Update filtered data when filters or search change
+  // Apply filters and search query
   useEffect(() => {
     if (data.length > 0) {
-      const filtered = filterAndSearchData(data, activeFilters, searchQuery)
-      setFilteredData(filtered)
+      const filtered = filterAndSearchData(data, activeFilters, searchQuery);
+      setFilteredData(filtered);
+    } else {
+      setFilteredData([]);
     }
-  }, [activeFilters, searchQuery, data])
+  }, [activeFilters, searchQuery, data]);
 
-  // Handler for applying filters
-  const handleApplyFilters = (selectedSources) => {
-    setActiveFilters(selectedSources)
-  }
+  // Handle "Load More" button click
+  const handleLoadMore = () => {
+    if (!isLoadingMore && hasMore) {
+      setPage((prev) => prev + 1);  // Increment page number
+    }
+  };
 
-  // Handler for clearing all filters and search
+  // Clear search and filters
   const handleClearAll = () => {
-    setActiveFilters([])
-    setSearchQuery("")
-  }
+    setActiveFilters([]);
+    setSearchQuery("");
+  };
 
-  // Handler for clearing just search
+  // Clear search input
   const handleClearSearch = () => {
-    setSearchQuery("")
-  }
+    setSearchQuery("");
+  };
 
-  // Render content based on state
   const renderContent = () => {
-    if (isLoading) {
-      return <DigiNewsSkeleton />
+    if (isLoading && page === 1) {
+      return <DigiNewsSkeleton />;
     }
 
     if (error) {
@@ -99,7 +104,7 @@ export default function DigiNews() {
           <XCircle className="h-12 w-12 text-red-500 mb-4" />
           <p className="text-gray-600">{error}</p>
         </div>
-      )
+      );
     }
 
     if (filteredData.length === 0 && (activeFilters.length > 0 || searchQuery)) {
@@ -116,16 +121,16 @@ export default function DigiNews() {
             Cancella tutto
           </button>
         </div>
-      )
+      );
     }
 
     return (
       <div className="space-y-6">
         {filteredData.map((item) => (
-          <article key={item.id} className="border-b border-gray-200 pb-6 last:border-0 relative">
+          <article key={`${item.id}-${item.title}`} className="border-b border-gray-200 pb-6 last:border-0 relative">
             <div className="flex items-start gap-3">
               <div className="bg-green-500 text-white p-1.5 rounded text-sm font-medium min-w-[28px] text-center">
-                {getDomainName(item.source).charAt(0).toUpperCase()}
+                {item.source.charAt(0).toUpperCase()}
               </div>
 
               <div className="flex-1 min-w-0">
@@ -153,14 +158,35 @@ export default function DigiNews() {
             )}
           </article>
         ))}
+
+        {/* Load More Button: Show if there are more pages */}
+        {hasMore && (
+          <div className="text-center mt-4">
+            {isLoadingMore ? (
+              <div className="flex items-center justify-center gap-2 text-gray-500">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <span>Caricamento...</span>
+              </div>
+            ) : (
+              <button
+                onClick={handleLoadMore}
+                className="px-4 py-2 bg-green-500 min-w-[40%] text-white rounded-lg hover:bg-green-600 transition"
+              >
+                Carica altri
+              </button>
+            )}
+          </div>
+        )}
       </div>
-    )
-  }
+    );
+  };
 
   return (
-    <div className="max-w-2xl mx-auto bg-white min-h-screen flex  flex-col">
-      <header className="sticky top-0 pb-9 bg-white p-4 md:p-6  z-10 shadow-sm">
-        <h1 className="text-2xl md:text-3xl font-bold text-[#1a3b54] mb-4">DIGINEWS</h1>
+    <div className="max-w-2xl mx-auto bg-white min-h-screen flex flex-col">
+      <header className="sticky top-0 pb-9 bg-white p-4 md:p-6 z-10 shadow-sm">
+        <h1 className="text-2xl md:text-3xl font-bold text-[#1a3b54] mb-4">
+          DIGINEWS
+        </h1>
         <div className="relative flex items-center gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
@@ -191,38 +217,24 @@ export default function DigiNews() {
               </button>
             )}
             <button
-              className={`p-2 rounded-full ${activeFilters.length > 0 ? "bg-green-500" : "bg-[#1a3b54]"}`}
+              className={`p-2 rounded-full ${
+                activeFilters.length > 0 ? "bg-green-500" : "bg-[#1a3b54]"
+              }`}
               onClick={() => setIsFilterOpen(true)}
             >
               <Filter className="h-5 w-5 text-white" />
             </button>
           </div>
         </div>
-        {(activeFilters.length > 0 || searchQuery) && (
-          <div className="mt-2 flex items-center gap-2 flex-wrap">
-            {activeFilters.length > 0 && (
-              <span className="text-sm text-gray-500">
-                Filtri attivi: {activeFilters.length}
-              </span>
-            )}
-            {searchQuery && (
-              <span className="text-sm text-gray-500">
-                Ricerca: "{searchQuery}"
-              </span>
-            )}
-          </div>
-        )}
       </header>
 
-      <div className="flex-1 p-4 md:p-6 pt-0 overflow-y-auto">
-        {renderContent()}
-      </div>
+      <div className="flex-1 p-4 md:p-6">{renderContent()}</div>
 
       <FilterModal
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
-        onApply={handleApplyFilters}
-        initialFilters={activeFilters}
+        activeFilters={activeFilters}
+        setActiveFilters={setActiveFilters}
       />
     </div>
   );

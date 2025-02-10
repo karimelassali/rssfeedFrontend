@@ -1,56 +1,43 @@
 'use client';
-import axios from "axios";
 import { useEffect, useState } from "react";
-
-import Carousel from "@/components/ui/carousel";
-import WordPressImageFetcher from "@/components/ui/imgSelection";
-import { useContext } from "react";
-import AuthContext from "@/context/AuthContext";
-import { Logo } from "@/components/ui/logo";
+import axios from "axios";
+import Head from 'next/head';
 import DigiNews from "@/components/diginews";
-export default function Home() {
+import OneSignal from 'react-onesignal';
 
-  const slides = [
-    {
-      id: 1,
-      src: 'https://picsum.photos/id/1015/1000/600',
-      alt: 'Image 1',
-    },
-    {
-      id: 2,
-      src: 'https://picsum.photos/id/1016/1000/600',
-      alt: 'Image 2',
-    },
-    {
-      id: 3,
-      src: 'https://picsum.photos/id/1017/1000/600',
-      alt: 'Image 3',
-    },
-    {
-      id: 4,
-      src: 'https://picsum.photos/id/1018/1000/600',
-      alt: 'Image 4',
-    },
-    {
-      id: 5,
-      src: 'https://picsum.photos/id/1019/1000/600',
-      alt: 'Image 5',
-    },
-  ];
+
+export default function Home() {
   const [data, setData] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
-  // const {user,logout} = useContext(AuthContext);
-
 
   useEffect(() => {
+    // Fetch data from API
     axios.get('api/test')
       .then(response => setData(response.data))
       .catch(error => console.error(error));
-  },[])
+
+
+         // Ensure this code runs only on the client side
+        if (typeof window !== 'undefined') {
+          OneSignal.init({
+            appId: 'e8dd6f91-e21d-4a9c-bab4-f8440b7d63b0',
+            // You can add other initialization options here
+            notifyButton: {
+              enable: true,
+            },
+            // Uncomment the below line to run on localhost. See: https://documentation.onesignal.com/docs/local-testing
+            // allowLocalhostAsSecureOrigin: true
+          });
+        }
+
+  }, []);
+
   return (
-    <div className="w-full h-full" >
+    <div className="w-full h-full">
+      <Head>
+        {/* OneSignal SDK is dynamically imported */}
+      </Head>
       <DigiNews />
     </div>
   );
 }
-

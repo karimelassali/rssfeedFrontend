@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { ImagePlus, Upload } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import axios from "axios";
+import { Loader2 } from "lucide-react";
 
 export function ImageUploadModal({
   open,
@@ -18,7 +19,7 @@ export function ImageUploadModal({
 
  React.useEffect(() => {
    const fetchWordPressImages = async () => {
-     const response = await axios.get('https://aostasera.it/wp-json/wp/v2/media?per_page=50');
+     const response = await axios.get('https://www.lavalleenotizie.it/wp-json/wp/v2/media?per_page=50');
      setWordPressImages(response.data.map((image) => image.guid.rendered));
    }
    fetchWordPressImages();
@@ -59,28 +60,36 @@ export function ImageUploadModal({
               Upload Locale
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="wordpress" className="mt-4 flex-1">
-            <ScrollArea className="h-full">
-              <div className="grid grid-cols-2 gap-4 p-4 md:grid-cols-3">
-                {wordpressImages.map((image) => (
-                  <button
-                    key={image.id}
-                    onClick={() => {
-                      onImageSelect(image)
-                      onOpenChange(false)
-                    }}
-                    className="group relative aspect-video overflow-hidden rounded-lg border-2 border-transparent hover:border-blue-500"
-                  >
-                    <img
-                      src={image || "/placeholder.svg"}
-                      alt={`WordPress Media ${image.id}`}
-                      className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                    />
-                  </button>
-                ))}
-              </div>
+          <TabsContent value="wordpress" className="mt-4 flex-1 min-h-0">
+            <ScrollArea className="h-full overflow-y-auto">
+              {wordpressImages.length > 0 ? (
+                <div className="grid grid-cols-2 gap-4 p-4 md:grid-cols-3">
+                  {wordpressImages.map((image) => (
+                    <button
+                      key={image.id}
+                      onClick={() => {
+                        onImageSelect(image)
+                        onOpenChange(false)
+                      }}
+                      className="group relative aspect-video overflow-hidden rounded-lg border-2 border-transparent hover:border-blue-500"
+                    >
+                      <img
+                        src={image || "/placeholder.svg"}
+                        alt={`WordPress Media ${image.id}`}
+                        className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                      />
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center gap-4 p-8">
+                  <Loader2 className="h-8 w-8 text-gray-400 animate-spin" />
+                  <p>Loading images...</p>
+                </div>
+              )}
             </ScrollArea>
           </TabsContent>
+
           <TabsContent value="local" className="mt-4 flex-1">
             <div className="flex flex-col items-center justify-center gap-4 p-8">
               <div

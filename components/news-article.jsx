@@ -9,6 +9,7 @@ import Image from "next/image"
 import axios from "axios"
 import { Logo } from "./ui/logo"
 import PublishingWizard from "./publishing-wizard"
+import ArticleSkeleton from "./ui/skeletons/articleSkeletons"
 
 export default function NewsArticle({id}) {
   const [isEditing, setIsEditing] = useState(false)
@@ -112,7 +113,8 @@ export default function NewsArticle({id}) {
   //   console.log('ai contu  = ' + continuingButtons.aiContinue);
   // },[annulingEditing,continuingButtons.aiContinue])
   const renderMainArticleView = () => (
-    <motion.div
+    articleData.title && articleData.description ? (
+      <motion.div
       key="article"
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
@@ -157,7 +159,10 @@ export default function NewsArticle({id}) {
           </Button>
         )
       }
-    </motion.div>
+      </motion.div>
+    ):(
+      <ArticleSkeleton />
+    )
   )
 
   const renderEditContent = () => {

@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ChevronLeft, ImagePlus, X } from "lucide-react"
+import { ChevronLeft, ImagePlus, X, Loader2, CheckCircle, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
@@ -12,7 +12,8 @@ import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import { ImageUploadModal } from "./image-upload-modal"
 import { Logo } from "./ui/logo"
-import axios from "axios"
+import { useRouter } from 'next/navigation'
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 const categories = [
   { id: "cronaca", name: "Cronaca" },
@@ -31,28 +32,59 @@ const categories = [
   { id: "archivio", name: "Archivio" },
 ]
 
-export default function PublishingWizard({articleData,anulling}) {
+export default function PublishingWizard({ articleData, anulling }) {
+  const router = useRouter()
   const [step, setStep] = React.useState(1)
   const [imageModalOpen, setImageModalOpen] = React.useState(false)
+  const [publishingStatus, setPublishingStatus] = React.useState('idle')
+  const [errorMessage, setErrorMessage] = React.useState('')
+  const [redirectCountdown, setRedirectCountdown] = React.useState(2)
+  const [isRedirecting, setIsRedirecting] = React.useState(false)
+
   const [formData, setFormData] = React.useState({
     image: null,
     category: "",
     showInHomepage: false,
-    publishType: "now", // 'now' or 'schedule'
+    publishType: "now",
     date: "",
     time: "",
   })
-  const [publishingState, setPublishingState] = React.useState({
-    response: null,
-    isClicked: false,
-  });
+
+  // Handle countdown and redirect
+  React.useEffect(() => {
+    let timer
+    if (isRedirecting && redirectCountdown > 0) {
+      timer = setInterval(() => {
+        setRedirectCountdown((prev) => prev - 1)
+      }, 1000)
+    } else if (isRedirecting && redirectCountdown === 0) {
+      router.push('/')
+    }
+    return () => clearInterval(timer)
+  }, [isRedirecting, redirectCountdown, router])
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
+    // Reset error when user makes changes
+    if (errorMessage) setErrorMessage('')
+  }
+
+  const validateScheduledTime = () => {
+    if (formData.publishType !== "schedule") return true
+    
+    const scheduledDateTime = new Date(`${formData.date}T${formData.time}`)
+    const now = new Date()
+    
+    if (scheduledDateTime <= now) {
+      setErrorMessage("La data di pubblicazione deve essere nel futuro")
+      return false
+    }
+    return true
   }
 
   const handleContinue = () => {
     if (step === 1) {
+      if (!validateScheduledTime()) return
       setStep(2)
     } else if (step === 2 && formData.category) {
       setStep(3)
@@ -62,6 +94,7 @@ export default function PublishingWizard({articleData,anulling}) {
   const handleBack = () => {
     if (step > 1) {
       setStep(step - 1)
+      setErrorMessage('')
     }
   }
 
@@ -79,21 +112,69 @@ export default function PublishingWizard({articleData,anulling}) {
 
   const publicArticle = async (id) => {
     try {
+      setPublishingStatus('publishing')
+      setErrorMessage('')
+
+      const publishData = {
+        ...formData,
+        scheduledTime: formData.publishType === "schedule" 
+          ? new Date(`${formData.date}T${formData.time}`).toISOString()
+          : null
+      }
+
       const response = await fetch(`http://localhost:3000/api/publish/${id}`, {
         method: "POST",
-      });
-      const res = await response.json();
-      console.log("Response:", res); // تحقق من الرد
-      if (response.ok) {
-        setPublishingState({ response: res, isClicked: true });
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(publishData)
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Errore durante la pubblicazione')
       }
+
+      setPublishingStatus('published')
+      setIsRedirecting(true)
     } catch (error) {
-      console.error("Error publishing article:", error);
+      console.error("Error publishing article:", error)
+      setPublishingStatus('error')
+      setErrorMessage(error.message || 'Si è verificato un errore durante la pubblicazione')
     }
-  };
-  
+  }
+
+  const getPublishButtonContent = () => {
+    switch (publishingStatus) {
+      case 'publishing':
+        return (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Pubblicazione in corso...
+          </>
+        )
+      case 'published':
+        return (
+          <>
+            <CheckCircle className="mr-2 h-4 w-4" />
+            Pubblicato!
+          </>
+        )
+      case 'error':
+        return (
+          <>
+            <AlertCircle className="mr-2 h-4 w-4" />
+            Riprova
+          </>
+        )
+      default:
+        return 'Pubblica'
+    }
+  }
+
   return (
-    (<div className="min-h-screen bg-gray-50 p-4">
+    <div className="min-h-screen bg-gray-50 p-4">
       <AnimatePresence mode="wait">
         {step === 1 && (
           <motion.div
@@ -107,6 +188,12 @@ export default function PublishingWizard({articleData,anulling}) {
                 <Logo />
               </div>
               <div className="space-y-4 p-4">
+                {errorMessage && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{errorMessage}</AlertDescription>
+                  </Alert>
+                )}
+
                 <div>
                   <p className="mb-2 text-sm">Inserisci immagine</p>
                   <div
@@ -118,9 +205,10 @@ export default function PublishingWizard({articleData,anulling}) {
                     {formData.image ? (
                       <>
                         <img
-                          src={formData.image || "/placeholder.svg"}
+                          src={formData.image}
                           alt="Preview"
-                          className="h-full w-full rounded-lg object-cover" />
+                          className="h-full w-full rounded-lg object-cover"
+                        />
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
@@ -139,22 +227,12 @@ export default function PublishingWizard({articleData,anulling}) {
                   </div>
                 </div>
 
-                <div>
-                  <p className="mb-2 text-sm">Seleziona categoria</p>
-                  <button
-                    className="w-full rounded-lg border p-3 text-left text-sm hover:bg-gray-50"
-                    onClick={() => setStep(2)}>
-                    {formData.category
-                      ? categories.find((c) => c.id === formData.category)?.name
-                      : "Seleziona una categoria"}
-                  </button>
-                </div>
-
                 <div className="flex items-center justify-between">
-                  <span className="text-sm">Seleziona posizione</span>
+                  <span className="text-sm">Mostra in homepage</span>
                   <Switch
                     checked={formData.showInHomepage}
-                    onCheckedChange={(checked) => handleInputChange("showInHomepage", checked)} />
+                    onCheckedChange={(checked) => handleInputChange("showInHomepage", checked)}
+                  />
                 </div>
 
                 <div className="space-y-4">
@@ -173,25 +251,32 @@ export default function PublishingWizard({articleData,anulling}) {
 
                   {formData.publishType === "schedule" && (
                     <div className="space-y-2">
-                      <p className="mb-2 text-sm">Seleziona data di pubblicazione</p>
+                      <p className="mb-2 text-sm">Seleziona data e ora di pubblicazione</p>
                       <div className="flex gap-2">
                         <input
                           type="date"
                           value={formData.date}
                           onChange={(e) => handleInputChange("date", e.target.value)}
-                          className="flex-1 rounded-lg border p-2 text-sm" />
+                          min={new Date().toISOString().split('T')[0]}
+                          className="flex-1 rounded-lg border p-2 text-sm"
+                        />
                         <input
                           type="time"
                           value={formData.time}
                           onChange={(e) => handleInputChange("time", e.target.value)}
-                          className="flex-1 rounded-lg border p-2 text-sm" />
+                          className="flex-1 rounded-lg border p-2 text-sm"
+                        />
                       </div>
                     </div>
                   )}
                 </div>
 
                 <div className="flex gap-2 pt-2">
-                  <Button variant="outline" className="flex-1" onClick={() => {setStep(1);anulling(true)}}>
+                  <Button 
+                    variant="outline" 
+                    className="flex-1" 
+                    onClick={() => anulling(true)}
+                  >
                     Annulla
                   </Button>
                   <Button
@@ -261,53 +346,84 @@ export default function PublishingWizard({articleData,anulling}) {
                 <Logo />
               </div>
               <div className="space-y-4 p-4">
+                {errorMessage && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{errorMessage}</AlertDescription>
+                  </Alert>
+                )}
+
                 <div className="space-y-2">
                   <span className="text-sm text-orange-500">PRINCIPALE</span>
-                  <h3 className="text-lg font-medium">{categories.find((c) => c.id === formData.category)?.name}</h3>
+                  <h3 className="text-lg font-medium">
+                    {categories.find((c) => c.id === formData.category)?.name}
+                  </h3>
                 </div>
+
                 {formData.image && (
                   <img
-                    src={formData.image || "/placeholder.svg"}
+                    src={formData.image}
                     alt="Preview"
-                    className="aspect-video w-full rounded-lg object-cover" />
+                    className="aspect-video w-full rounded-lg object-cover"
+                  />
                 )}
+
                 <div className="space-y-2">
                   <h4 className="text-lg font-semibold">{articleData.title}</h4>
                   <p className="text-sm text-gray-600">{articleData.description}</p>
                 </div>
-                <div className="flex gap-2 pt-2">
+
+                {formData.publishType === "schedule" && (
+                  <div className="rounded-lg bg-gray-50 p-3">
+                    <p className="text-sm text-gray-600">
+                      Programmato per: {new Date(`${formData.date}T${formData.time}`).toLocaleString('it-IT')}
+                    </p>
+                  </div>
+                )}
+                
+                {isRedirecting && (
+                  <div className="text-center text-sm text-gray-600">
+                    Reindirizzamento alla pagina principale in {redirectCountdown} secondi...
+                  </div>
+                )}
+                
+                <div
+                  className="fixed bottom-0 left-0 right-0 backdrop-blur-sm flex gap-2 p-2"
+                  style={{boxShadow: "0 0 10px rgba(0,0,0,0.2)"}}
+                >
                   <Button
                     variant="outline"
                     className="flex-1"
                     onClick={handleBack}
-                    disabled={publishingState.isClicked} // تعطيل الزر بعد النشر
-                  >
+                    disabled={publishingStatus !== 'idle' && publishingStatus !== 'error'}>
                     Modifica
                   </Button>
 
                   <Button
-                    className="flex-1 bg-[#00C897] hover:bg-[#00B386]"
+                    className={cn(
+                      "flex-1",
+                      publishingStatus === 'published' 
+                        ? "bg-green-600 hover:bg-green-700"
+                        : publishingStatus === 'error'
+                        ? "bg-red-600 hover:bg-red-700"
+                        : "bg-[#00C897] hover:bg-[#00B386]",
+                      "flex items-center justify-center"
+                    )}
                     onClick={() => publicArticle(articleData.id)}
-                    disabled={publishingState.isClicked} // تعطيل الزر بعد النشر
-                  >
-                    {publishingState.isClicked ? "Pubblicato" : "Pubblica"}
+                    disabled={publishingStatus === 'publishing' || publishingStatus === 'published'}>
+                    {getPublishButtonContent()}
                   </Button>
-
-
-
-                  </div>
+                </div>
               </div>
             </Card>
           </motion.div>
         )}
       </AnimatePresence>
 
-      
       <ImageUploadModal
         open={imageModalOpen}
         onOpenChange={setImageModalOpen}
-        onImageSelect={(imageUrl) => handleInputChange("image", imageUrl)} />
-    </div>)
-  );
+        onImageSelect={(imageUrl) => handleInputChange("image", imageUrl)}
+      />
+    </div>
+  )
 }
-
