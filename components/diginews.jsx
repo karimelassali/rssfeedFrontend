@@ -146,7 +146,7 @@ export default function DigiNews() {
           <article key={`${item.id}-${item.title}`} className="border-b border-gray-200 pb-6 last:border-0 relative">
             <div className="flex items-start gap-3">
               <div className="bg-green-500 text-white p-1.5 rounded text-sm font-medium min-w-[28px] text-center">
-                {item.source.charAt(0).toUpperCase()}
+                {item.source.charAt(12).toUpperCase()}
               </div>
 
               <div className="flex-1 min-w-0">
@@ -167,7 +167,12 @@ export default function DigiNews() {
             </div>
 
             {item.isPublished === 1 && (
-              <span className="absolute top-0 right-0 bg-orange-100 text-orange-600 px-2 py-0.5 rounded text-sm">
+              <span className="absolute top-0 right-0 bg-orange-100 text-orange-600 px-2 py-0.5 rounded text-sm md:hidden block">
+                Pubblicata
+              </span>
+            )}
+            {item.isPublished === 1 && (
+              <span className="hidden md:block bg-orange-100 text-orange-600 px-2 py-0.5 rounded text-sm ml-4 mt-1">
                 Pubblicata
               </span>
             )}
