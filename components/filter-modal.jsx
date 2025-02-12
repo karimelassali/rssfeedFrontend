@@ -1,5 +1,5 @@
 import { ArrowLeft, X } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const NEWS_SOURCES = [
   { id: "ansa", name: "Ansa Valle d'Aosta" },
@@ -13,24 +13,26 @@ const NEWS_SOURCES = [
 export function FilterModal({
   isOpen,
   onClose,
-  onApply,
-  initialFilters = []
+  onApply = () => {}, // Default to a no-op function if not provided
+  initialFilters = [],
 }) {
   const [selectedSources, setSelectedSources] = useState(initialFilters);
+  const prevIsOpenRef = useRef(isOpen);
 
-  // Move useEffect before the early return
+  // Reset selectedSources when the modal is opened
   useEffect(() => {
-    if (isOpen) {
+    if (!prevIsOpenRef.current && isOpen) {
       setSelectedSources(initialFilters);
     }
+    prevIsOpenRef.current = isOpen;
   }, [isOpen, initialFilters]);
 
   if (!isOpen) return null;
 
   const handleSourceToggle = (sourceId) => {
-    setSelectedSources(prev => 
-      prev.includes(sourceId) 
-        ? prev.filter(id => id !== sourceId) 
+    setSelectedSources((prev) =>
+      prev.includes(sourceId)
+        ? prev.filter((id) => id !== sourceId)
         : [...prev, sourceId]
     );
   };
@@ -47,8 +49,8 @@ export function FilterModal({
   return (
     <div className="fixed inset-0 bg-white z-50 p-4">
       <div className="flex items-center justify-between mb-6">
-        <button 
-          onClick={onClose} 
+        <button
+          onClick={onClose}
           className="p-2 hover:bg-gray-100 rounded-full"
           type="button"
         >
@@ -56,10 +58,10 @@ export function FilterModal({
         </button>
         <h2 className="text-xl font-semibold">Filtra per fonte</h2>
         <div className="flex items-center gap-2">
-          <span
-            className="flex items-center gap-2 p-2 text-sm bg-gray-100 rounded-full"
-          >
-            {selectedSources.length > 0 ? `${selectedSources.length} Filtri` : "Nessun filtro"}
+          <span className="flex items-center gap-2 p-2 text-sm bg-gray-100 rounded-full">
+            {selectedSources.length > 0
+              ? `${selectedSources.length} Filtri`
+              : "Nessun filtro"}
           </span>
           {selectedSources.length > 0 && (
             <button
@@ -79,12 +81,17 @@ export function FilterModal({
             key={source.id}
             onClick={() => handleSourceToggle(source.id)}
             type="button"
-            className={`p-3 rounded-full text-sm font-medium text-left flex items-center gap-2
-              ${selectedSources.includes(source.id) ? "bg-[#1a3b54] text-white" : "bg-gray-100 text-gray-900"}`}
+            className={`p-3 rounded-full text-sm font-medium text-left flex items-center gap-2 ${
+              selectedSources.includes(source.id)
+                ? "bg-[#1a3b54] text-white"
+                : "bg-gray-100 text-gray-900"
+            }`}
           >
             <div
               className={`w-6 h-6 flex items-center justify-center rounded ${
-                selectedSources.includes(source.id) ? "bg-green-500" : "bg-gray-400"
+                selectedSources.includes(source.id)
+                  ? "bg-green-500"
+                  : "bg-gray-400"
               }`}
             >
               {source.name.charAt(0)}
@@ -95,8 +102,8 @@ export function FilterModal({
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 p-4 flex gap-3 bg-white border-t">
-        <button 
-          onClick={onClose} 
+        <button
+          onClick={onClose}
           className="flex-1 py-3 border-2 rounded-full font-medium"
           type="button"
         >
@@ -105,7 +112,9 @@ export function FilterModal({
         <button
           onClick={handleApply}
           className={`flex-1 py-3 rounded-full font-medium ${
-            selectedSources.length > 0 ? "bg-green-500 text-white" : "bg-gray-200 text-gray-600"
+            selectedSources.length > 0
+              ? "bg-green-500 text-white"
+              : "bg-gray-200 text-gray-600"
           }`}
           disabled={selectedSources.length === 0}
           type="button"

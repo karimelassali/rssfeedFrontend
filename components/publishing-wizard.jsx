@@ -32,7 +32,7 @@ const categories = [
   { id: "archivio", name: "Archivio" },
 ]
 
-export default function PublishingWizard({ articleData, anulling }) {
+export default function PublishingWizard({ articleData, anulling , id }) {
   const router = useRouter()
   const [step, setStep] = React.useState(1)
   const [imageModalOpen, setImageModalOpen] = React.useState(false)
@@ -48,6 +48,7 @@ export default function PublishingWizard({ articleData, anulling }) {
     publishType: "now",
     date: "",
     time: "",
+    id: id,
   })
 
   // Handle countdown and redirect
@@ -122,12 +123,16 @@ export default function PublishingWizard({ articleData, anulling }) {
           : null
       }
 
-      const response = await fetch(`http://localhost:3000/api/publish/${id}`, {
+      const response = await fetch(`http://localhost:3000/api/publish/${formData.id}`, {
         method: "POST",
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(publishData)
+        body: JSON.stringify({
+          title: articleData.title,
+          description: articleData.description,
+          ...publishData
+        })
       })
 
       const data = await response.json()

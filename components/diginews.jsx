@@ -22,10 +22,12 @@ export default function DigiNews() {
   useEffect(() => {
     const fetchData = async () => {
       setIsLoadingMore(page > 1);  // Show loading indicator when fetching more
-      setIsLoading(page === 1);  // Show initial loading indicator for first page
+      setIsLoading(page === 1);      // Show initial loading indicator for first page
 
       try {
-        const response = await axios.get(`/api/test?page=${page}&pageSize=${PAGE_SIZE}`);
+        const response = await axios.get(
+          `/api/test?page=${page}&pageSize=${PAGE_SIZE}`
+        );
         const newData = response.data.data;
 
         if (newData.length < PAGE_SIZE) {
@@ -55,7 +57,8 @@ export default function DigiNews() {
   // Filtering and searching logic
   const filterAndSearchData = (items, filters, query) => {
     return items.filter((item) => {
-      const domainMatch = filters.length === 0 || filters.includes(item.source);
+      const domainMatch =
+        filters.length === 0 || filters.includes(item.source);
       const searchMatch =
         !query ||
         [item.title, item.source].some((field) =>
@@ -98,7 +101,7 @@ export default function DigiNews() {
     const minutes = Math.ceil(diff / 60);
     const hours = Math.ceil(minutes / 60);
     const days = Math.ceil(hours / 24);
-  
+
     if (days > 0) {
       return `${days} ${days === 1 ? "giorno" : "giorni"} fa`;
     } else if (hours > 0) {
@@ -109,6 +112,7 @@ export default function DigiNews() {
       return "meno di 1 minuto fa";
     }
   };
+
   const renderContent = () => {
     if (isLoading && page === 1) {
       return <DigiNewsSkeleton />;
@@ -143,19 +147,24 @@ export default function DigiNews() {
     return (
       <div className="space-y-6">
         {filteredData.map((item) => (
-          <article key={`${item.id}-${item.title}`} className="border-b border-gray-200 pb-6 last:border-0 relative">
+          <article
+            key={`${item.id}-${item.title}`}
+            className="border-b border-gray-200 pb-6 last:border-0 relative"
+          >
             <div className="flex items-start gap-3">
               <div className="bg-green-500 text-white p-1.5 rounded text-sm font-medium min-w-[28px] text-center">
-                {item.source.charAt(12).toUpperCase()}
+                {item.source.charAt(0).toUpperCase()}
               </div>
 
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium mb-1 truncate">{item.source}</p>
-                <h2 className="text-base font-semibold mb-2 line-clamp-1">{item.title}</h2>
+                <p className="text-sm font-medium mb-1 truncate">
+                  {item.source}
+                </p>
+                <h2 className="text-base font-semibold mb-2 line-clamp-1">
+                  {item.title}
+                </h2>
                 <p className="text-sm text-gray-500 truncate">
-                  {
-                    getTimeDifference(item.pubDate)
-                  }
+                  {getTimeDifference(item.pubDate)}
                 </p>
               </div>
 
@@ -167,7 +176,7 @@ export default function DigiNews() {
             </div>
 
             {item.isPublished === 1 && (
-              <span className="absolute top-0 right-0 bg-orange-100 text-orange-600 px-2 py-0.5 rounded text-sm  block">
+              <span className="absolute top-0 right-0 bg-orange-100 text-orange-600 px-2 py-0.5 rounded text-sm">
                 Pubblicata
               </span>
             )}
@@ -248,8 +257,12 @@ export default function DigiNews() {
       <FilterModal
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
-        activeFilters={activeFilters}
-        setActiveFilters={setActiveFilters}
+        onApply={(filters) => {
+          console.log("Applied filters:", filters);
+          // Update the activeFilters state so that filtering is applied
+          setActiveFilters(filters);
+        }}
+        initialFilters={activeFilters}
       />
     </div>
   );
