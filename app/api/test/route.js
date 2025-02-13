@@ -15,7 +15,7 @@ export async function GET() {
   // }
 
   // Fetch data from the API if not cached
-  const response = await axios.get("http://127.0.0.1:8000/api/data");
+  const response = await axios.get(process.env.API_URL + "api/data");
   const data = response.data;
 
   // Store the fetched data in the cache

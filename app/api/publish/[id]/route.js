@@ -5,7 +5,7 @@ export async function POST(request, { params }) {
     const { id } = params;
   
     try {
-      const response = await axios.post(`http://127.0.0.1:8000/api/article/publish/${id}`);
+      const response = await axios.post(process.env.API_URL+`api/article/publish/${id}`);
       const data = response.data;
       return NextResponse.json(data);
     } catch (error) {

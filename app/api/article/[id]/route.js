@@ -5,7 +5,7 @@ export async function GET(request, { params }) {
   const { id } = params;
   console.log('Extracted dynamic id:', id);
 
-  const response = await axios.get(`http://127.0.0.1:8000/api/data/${id}`);
+  const response = await axios.get(process.env.API_URL + `api/data/${id}`);
   return NextResponse.json(response.data);
 }
 
