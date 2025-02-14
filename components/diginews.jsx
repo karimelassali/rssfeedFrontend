@@ -26,7 +26,7 @@ export default function DigiNews() {
 
       try {
         const response = await axios.get(
-          `/api/test?page=${page}&pageSize=${PAGE_SIZE}`
+          `/api/articles?page=${page}&pageSize=${PAGE_SIZE}`
         );
         const newData = response.data.data;
 

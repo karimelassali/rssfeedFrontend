@@ -17,13 +17,13 @@ export function ImageUploadModal({
 
   const [wordpressImages, setWordPressImages] = React.useState([]);
 
- React.useEffect(() => {
-   const fetchWordPressImages = async () => {
-     const response = await axios.get('https://www.lavalleenotizie.it/wp-json/wp/v2/media?per_page=50');
-     setWordPressImages(response.data.map((image) => image.guid.rendered));
-   }
-   fetchWordPressImages();
- }, [])
+  React.useEffect(() => {
+    const fetchWordPressImages = async () => {
+      const response = await axios.get('https://www.lavalleenotizie.it/wp-json/wp/v2/media?per_page=50');
+      setWordPressImages(response.data.map((image) => image.guid.rendered));
+    }
+    fetchWordPressImages();
+  }, [])
 
   const handleFileChange = (event) => {
     const file = event.target.files?.[0]
@@ -38,20 +38,12 @@ export function ImageUploadModal({
   }
 
   return (
-    <Dialog
-      className="bg-red-300"
-      open={open}
-      onOpenChange={onOpenChange}
-      style={{ height: "100vh" }}
-    >
-      <DialogContent
-        className="max-w-3xl h-full  flex flex-col"
-        style={{ height: "calc(100vh - 16px)" }}
-      >
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl h-[100vh] border-none max-h-[89vh]">
         <DialogHeader>
           <DialogTitle>Seleziona immagine</DialogTitle>
         </DialogHeader>
-        <Tabs defaultValue="wordpress" className="w-full flex-1">
+        <Tabs defaultValue="wordpress" className="w-full h-full flex flex-col flex-1">
           <TabsList className="w-full">
             <TabsTrigger value="wordpress" className="flex-1">
               WordPress Media
@@ -60,13 +52,13 @@ export function ImageUploadModal({
               Upload Locale
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="wordpress" className="mt-4 flex-1 min-h-0">
-            <ScrollArea className="h-full overflow-y-auto">
+          <TabsContent value="wordpress" className="flex-1 relative">
+            <ScrollArea className="h-[60vh] w-full">
               {wordpressImages.length > 0 ? (
                 <div className="grid grid-cols-2 gap-4 p-4 md:grid-cols-3">
-                  {wordpressImages.map((image) => (
+                  {wordpressImages.map((image, index) => (
                     <button
-                      key={image.id}
+                      key={index}
                       onClick={() => {
                         onImageSelect(image)
                         onOpenChange(false)
@@ -75,7 +67,7 @@ export function ImageUploadModal({
                     >
                       <img
                         src={image || "/placeholder.svg"}
-                        alt={`WordPress Media ${image.id}`}
+                        alt={`WordPress Media ${index}`}
                         className="h-full w-full object-cover transition-transform group-hover:scale-105"
                       />
                     </button>
@@ -90,7 +82,7 @@ export function ImageUploadModal({
             </ScrollArea>
           </TabsContent>
 
-          <TabsContent value="local" className="mt-4 flex-1">
+          <TabsContent value="local" className="mt-4">
             <div className="flex flex-col items-center justify-center gap-4 p-8">
               <div
                 onClick={() => fileInputRef.current?.click()}
@@ -120,4 +112,3 @@ export function ImageUploadModal({
     </Dialog>
   );
 }
-
