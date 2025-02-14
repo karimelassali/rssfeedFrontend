@@ -49,6 +49,9 @@ export default function PublishingWizard({ articleData, anulling , id }) {
     date: "",
     time: "",
     id: id,
+    title:articleData.title,
+    description:articleData.description,
+    pubDate:articleData.pubDate
   })
 
   // Handle countdown and redirect
@@ -256,6 +259,7 @@ export default function PublishingWizard({ articleData, anulling , id }) {
 
                   {formData.publishType === "schedule" && (
                     <div className="space-y-2">
+                      {formData.date}/{formData.time}
                       <p className="mb-2 text-sm">Seleziona data e ora di pubblicazione</p>
                       <div className="flex gap-2">
                         <input

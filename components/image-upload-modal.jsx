@@ -56,6 +56,13 @@ export function ImageUploadModal({
             <ScrollArea className="h-[60vh] w-full">
               {wordpressImages.length > 0 ? (
                 <div className="grid grid-cols-2 gap-4 p-4 md:grid-cols-3">
+                  {/* Search bar */}
+                  <input
+                    type="text"
+                    placeholder="Cerca..."
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring focus:ring-blue-500 focus:ring-opacity-50"
+                  />
+
                   {wordpressImages.map((image, index) => (
                     <button
                       key={index}

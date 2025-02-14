@@ -84,7 +84,7 @@ export async function POST(req) {
   } catch (error) {
     console.error("Fetch Error:", error);
     return NextResponse.json(
-      { error: "An unexpected error occurred." },
+      { error: "An unexpected error occurred." + error },
       { status: 500 }
     );
   }

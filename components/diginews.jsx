@@ -9,39 +9,42 @@ export default function DigiNews() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState([]);
   const [data, setData] = useState([]);
-  const [filteredData, setFilteredData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const PAGE_SIZE = 10;
+  const [pageSize, setPageSize] = useState(10);
 
-  // Fetch data when page number changes
+  // Reset to first page when filters or search change
+  useEffect(() => {
+    setPage(1);
+  }, [activeFilters, searchQuery]);
+
+  // Fetch data when page, filters, or search changes
   useEffect(() => {
     const fetchData = async () => {
-      setIsLoadingMore(page > 1);  // Show loading indicator when fetching more
-      setIsLoading(page === 1);      // Show initial loading indicator for first page
+      setIsLoadingMore(page > 1);
+      setIsLoading(page === 1);
 
       try {
-        const response = await axios.get(
-          `/api/articles?page=${page}&pageSize=${PAGE_SIZE}`
-        );
+        const response = await axios.get(`/api/articles`, {
+          params: {
+            page,
+            pageSize: pageSize,
+            searchQuery,
+            activeFilters,
+          },
+        });
+
         const newData = response.data.data;
 
-        if (newData.length < PAGE_SIZE) {
-          setHasMore(false);  // No more data to load
-        }
+        // Update hasMore based on whether the new data is less than PAGE_SIZE
+        setHasMore(newData.length >= pageSize);
 
-        // Append new data to existing data state
-        setData((prevData) => {
-          if (page === 1) {
-            return newData;  // Replace initial data
-          } else {
-            return [...prevData, ...newData];  // Append new data
-          }
-        });
+        // Append new data if it's not the first page, otherwise replace
+        setData((prev) => (page === 1 ? newData : [...prev, ...newData]));
       } catch (err) {
         console.error("Error fetching data:", err);
         setError("Failed to load news data");
@@ -52,36 +55,12 @@ export default function DigiNews() {
     };
 
     fetchData();
-  }, [page]);
-
-  // Filtering and searching logic
-  const filterAndSearchData = (items, filters, query) => {
-    return items.filter((item) => {
-      const domainMatch =
-        filters.length === 0 || filters.includes(item.source);
-      const searchMatch =
-        !query ||
-        [item.title, item.source].some((field) =>
-          field.toLowerCase().includes(query.toLowerCase())
-        );
-      return domainMatch && searchMatch;
-    });
-  };
-
-  // Apply filters and search query
-  useEffect(() => {
-    if (data.length > 0) {
-      const filtered = filterAndSearchData(data, activeFilters, searchQuery);
-      setFilteredData(filtered);
-    } else {
-      setFilteredData([]);
-    }
-  }, [activeFilters, searchQuery, data]);
+  }, [page, pageSize, searchQuery, activeFilters]);
 
   // Handle "Load More" button click
   const handleLoadMore = () => {
     if (!isLoadingMore && hasMore) {
-      setPage((prev) => prev + 1);  // Increment page number
+      setPage((prevPage) => prevPage + 1);
     }
   };
 
@@ -96,6 +75,7 @@ export default function DigiNews() {
     setSearchQuery("");
   };
 
+  // Calculate time difference for publication date
   const getTimeDifference = (pubDate) => {
     const diff = (new Date().getTime() - new Date(pubDate).getTime()) / 1000;
     const minutes = Math.ceil(diff / 60);
@@ -113,6 +93,7 @@ export default function DigiNews() {
     }
   };
 
+  // Render content based on loading, error, or data state
   const renderContent = () => {
     if (isLoading && page === 1) {
       return <DigiNewsSkeleton />;
@@ -127,7 +108,7 @@ export default function DigiNews() {
       );
     }
 
-    if (filteredData.length === 0 && (activeFilters.length > 0 || searchQuery)) {
+    if (data.length === 0 && (activeFilters.length > 0 || searchQuery)) {
       return (
         <div className="flex flex-col items-center justify-center p-8 text-center">
           <div className="mb-4 text-gray-400">
@@ -146,9 +127,9 @@ export default function DigiNews() {
 
     return (
       <div className="space-y-6">
-        {filteredData.map((item) => (
+        {data.map((item) => (
           <article
-            key={`${item.id}-${item.title}`}
+            key={`${item.id}-${item.pubDate}`} // Use a unique key based on item.id and pubDate
             className="border-b border-gray-200 pb-6 last:border-0 relative"
           >
             <div className="flex items-start gap-3">
@@ -183,7 +164,7 @@ export default function DigiNews() {
           </article>
         ))}
 
-        {/* Load More Button: Show if there are more pages */}
+        {/* Load More Button */}
         {hasMore && (
           <div className="text-center mt-4">
             {isLoadingMore ? (
@@ -258,8 +239,6 @@ export default function DigiNews() {
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
         onApply={(filters) => {
-          console.log("Applied filters:", filters);
-          // Update the activeFilters state so that filtering is applied
           setActiveFilters(filters);
         }}
         initialFilters={activeFilters}
