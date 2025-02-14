@@ -123,7 +123,7 @@ export default function PublishingWizard({ articleData, anulling , id }) {
           : null
       }
 
-      const response = await fetch(`http://localhost:3000/api/publish/${formData.id}`, {
+      const response = await fetch(`${process.env.API_URL}api/publish/${formData.id}`, {
         method: "POST",
         headers: {
           'Content-Type': 'application/json'
