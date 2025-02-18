@@ -4,7 +4,6 @@ import axios from "axios";
 import Head from 'next/head';
 import DigiNews from "@/components/diginews";
 import OneSignal from 'react-onesignal';
-import Link from 'next/link';
 
 export default function Home() {
   const [data, setData] = useState([]);
@@ -31,15 +30,6 @@ export default function Home() {
     <div className="w-full h-full">
       <Head>
       </Head>
-      <div className="bg-white p-4 shadow-sm">
-        <div className="flex gap-2 items-center">
-          <p className="text-gray-700">Please</p>
-          <Link href="/auth" className="text-blue-600 hover:text-blue-800 underline">
-            login
-          </Link>
-          <p className="text-gray-700">to access all features</p>
-        </div>
-      </div>
       <DigiNews />
     </div>
   );
