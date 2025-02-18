@@ -1,5 +1,5 @@
 'use client';
-import DigiNews from '@/components/diginews'
+import DigiNews 
 import OneSignal from 'react-onesignal';
 import { useEffect } from 'react';
 

@@ -1,5 +1,5 @@
 'use client';
-import DigiNews from '@/components/diginews'
+import DigiNews from "@/components/diginews";
 import OneSignal from 'react-onesignal';
 import { useEffect } from 'react';
 
@@ -15,7 +15,8 @@ export default function Home() {
       });
     }
   }, []);
-  return ( 
+
+  return (
     <div className="w-full h-full">
       <DigiNews />
     </div>
