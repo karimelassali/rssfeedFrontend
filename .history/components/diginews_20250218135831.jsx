@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
-import { Search, Filter, XCircle, X, PenSquare, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, Filter, XCircle, X, PenSquare, Loader2 } from "lucide-react";
 import axios from "axios";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import DigiNewsSkeleton from "./ui/skeletons/diginews";
-import { UserButton, useUser, useAuth } from "@clerk/nextjs";
+import { UserButton } from "@clerk/nextjs";
+import { auth, currentUser } from '@clerk/nextjs/server'
 // Lazy load the FilterModal component
-const FilterModal = dynamic(() => import('./filter-modal').then(mod => ({ default: mod.FilterModal })), {
+const FilterModal = dynamic(() => import("./filter-modal"), {
   loading: () => <div className="animate-pulse">Loading...</div>
 });
 
@@ -21,20 +22,8 @@ export default function DigiNews() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [pageSize, setPageSize] = useState(10);
-  const [showToken, setShowToken] = useState(false);
-  const { user } = useUser();
-  const { getToken } = useAuth();
-  const [jwtToken, setJwtToken] = useState("");
+  const user = await currentUser()
 
-  useEffect(() => {
-    const fetchToken = async () => {
-      if (user) {
-        const token = await getToken();
-        setJwtToken(token);
-      }
-    };
-    fetchToken();
-  }, [user, getToken]);
 
   // Reset to first page when filters or search change
   useEffect(() => {
@@ -170,13 +159,6 @@ export default function DigiNews() {
         <div className="sr-only" role="status" aria-live="polite">
           {data.length} articoli trovati
         </div>
-        {user && (
-              <div className="mt-4 p-4 bg-gray-50 rounded-lg overflow-hidden">
-                <pre className="text-sm text-gray-700 whitespace-pre-wrap">
-                  {JSON.stringify(user, null, 2)}
-                </pre>
-              </div>
-            )}
         {data.map((item) => (
           <article
             key={`${item.id}-${item.pubDate}`}
@@ -215,7 +197,6 @@ export default function DigiNews() {
                 Pubblicata
               </span>
             )}
-            
           </article>
         ))}
 
@@ -245,29 +226,6 @@ export default function DigiNews() {
   return (
     <main className="container mx-auto px-4 py-8">
       <div className="max-w-3xl mx-auto">
-        {user && jwtToken && (
-          <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-            <button
-              onClick={() => setShowToken(!showToken)}
-              className="flex items-center justify-between w-full text-left"
-              aria-expanded={showToken}
-            >
-              <span className="font-medium">JWT Token</span>
-              {showToken ? (
-                <ChevronUp className="h-5 w-5 text-gray-500" />
-              ) : (
-                <ChevronDown className="h-5 w-5 text-gray-500" />
-              )}
-            </button>
-            {showToken && (
-              <div className="mt-2 p-3 bg-white rounded border border-gray-200 overflow-x-auto">
-                <pre className="text-sm text-gray-700 whitespace-pre-wrap break-all">
-                  {jwtToken}
-                </pre>
-              </div>
-            )}
-          </div>
-        )}
         <div className="flex items-center gap-4 mb-8">
           <div className="relative flex-1">
             <input
@@ -296,12 +254,8 @@ export default function DigiNews() {
             aria-expanded={isFilterOpen}
           >
             <Filter className="h-6 w-6" aria-hidden="true" />
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">
-                {/* {user?.firstName || 'Guest'} */}
-              </span>
-            </div>
           </button>
+          {{}}
           <UserButton afterSignOutUrl="/" appearance={{
             elements: {
               avatarBox: "w-10 h-10 rounded-full hover:opacity-80 transition-opacity"
@@ -316,8 +270,8 @@ export default function DigiNews() {
         <FilterModal
           isOpen={isFilterOpen}
           onClose={() => setIsFilterOpen(false)}
-          initialFilters={activeFilters}
-          onApply={(filters) => setActiveFilters(filters)}
+          activeFilters={activeFilters}
+          setActiveFilters={setActiveFilters}
         />
       )}
     </main>

@@ -6,7 +6,7 @@ import dynamic from "next/dynamic";
 import DigiNewsSkeleton from "./ui/skeletons/diginews";
 import { UserButton, useUser, useAuth } from "@clerk/nextjs";
 // Lazy load the FilterModal component
-const FilterModal = dynamic(() => import('./filter-modal').then(mod => ({ default: mod.FilterModal })), {
+const FilterModal = dynamic(() => import("./filter-modal"), {
   loading: () => <div className="animate-pulse">Loading...</div>
 });
 
@@ -170,13 +170,6 @@ export default function DigiNews() {
         <div className="sr-only" role="status" aria-live="polite">
           {data.length} articoli trovati
         </div>
-        {user && (
-              <div className="mt-4 p-4 bg-gray-50 rounded-lg overflow-hidden">
-                <pre className="text-sm text-gray-700 whitespace-pre-wrap">
-                  {JSON.stringify(user, null, 2)}
-                </pre>
-              </div>
-            )}
         {data.map((item) => (
           <article
             key={`${item.id}-${item.pubDate}`}
@@ -215,7 +208,6 @@ export default function DigiNews() {
                 Pubblicata
               </span>
             )}
-            
           </article>
         ))}
 
@@ -227,6 +219,11 @@ export default function DigiNews() {
               className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label={isLoadingMore ? "Caricamento in corso..." : "Carica altri articoli"}
             >
+              {jwtToken && (
+                <span className="text-sm">
+                  {jwtToken}
+                </span>
+              )}
               {isLoadingMore ? (
                 <>
                   <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
@@ -316,8 +313,8 @@ export default function DigiNews() {
         <FilterModal
           isOpen={isFilterOpen}
           onClose={() => setIsFilterOpen(false)}
-          initialFilters={activeFilters}
-          onApply={(filters) => setActiveFilters(filters)}
+          activeFilters={activeFilters}
+          setActiveFilters={setActiveFilters}
         />
       )}
     </main>

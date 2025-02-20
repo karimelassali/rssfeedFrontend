@@ -6,7 +6,7 @@ import dynamic from "next/dynamic";
 import DigiNewsSkeleton from "./ui/skeletons/diginews";
 import { UserButton, useUser, useAuth } from "@clerk/nextjs";
 // Lazy load the FilterModal component
-const FilterModal = dynamic(() => import('./filter-modal').then(mod => ({ default: mod.FilterModal })), {
+const FilterModal = dynamic(() => import("./filter-modal"), {
   loading: () => <div className="animate-pulse">Loading...</div>
 });
 
@@ -54,6 +54,7 @@ export default function DigiNews() {
             pageSize,
             searchQuery,
             activeFilters,
+            jw
           },
         });
 
@@ -170,13 +171,6 @@ export default function DigiNews() {
         <div className="sr-only" role="status" aria-live="polite">
           {data.length} articoli trovati
         </div>
-        {user && (
-              <div className="mt-4 p-4 bg-gray-50 rounded-lg overflow-hidden">
-                <pre className="text-sm text-gray-700 whitespace-pre-wrap">
-                  {JSON.stringify(user, null, 2)}
-                </pre>
-              </div>
-            )}
         {data.map((item) => (
           <article
             key={`${item.id}-${item.pubDate}`}
@@ -215,7 +209,6 @@ export default function DigiNews() {
                 Pubblicata
               </span>
             )}
-            
           </article>
         ))}
 
@@ -316,8 +309,8 @@ export default function DigiNews() {
         <FilterModal
           isOpen={isFilterOpen}
           onClose={() => setIsFilterOpen(false)}
-          initialFilters={activeFilters}
-          onApply={(filters) => setActiveFilters(filters)}
+          activeFilters={activeFilters}
+          setActiveFilters={setActiveFilters}
         />
       )}
     </main>

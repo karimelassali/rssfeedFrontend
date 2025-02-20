@@ -6,7 +6,7 @@ import dynamic from "next/dynamic";
 import DigiNewsSkeleton from "./ui/skeletons/diginews";
 import { UserButton, useUser, useAuth } from "@clerk/nextjs";
 // Lazy load the FilterModal component
-const FilterModal = dynamic(() => import('./filter-modal').then(mod => ({ default: mod.FilterModal })), {
+const FilterModal = dynamic(() => import("./filter-modal"), {
   loading: () => <div className="animate-pulse">Loading...</div>
 });
 
@@ -316,8 +316,8 @@ export default function DigiNews() {
         <FilterModal
           isOpen={isFilterOpen}
           onClose={() => setIsFilterOpen(false)}
-          initialFilters={activeFilters}
-          onApply={(filters) => setActiveFilters(filters)}
+          activeFilters={activeFilters}
+          setActiveFilters={setActiveFilters}
         />
       )}
     </main>

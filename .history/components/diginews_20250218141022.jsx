@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { Search, Filter, XCircle, X, PenSquare, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, Filter, XCircle, X, PenSquare, Loader2 } from "lucide-react";
 import axios from "axios";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import DigiNewsSkeleton from "./ui/skeletons/diginews";
-import { UserButton, useUser, useAuth } from "@clerk/nextjs";
+import { UserButton, useUser } from "@clerk/nextjs";
 // Lazy load the FilterModal component
-const FilterModal = dynamic(() => import('./filter-modal').then(mod => ({ default: mod.FilterModal })), {
+const FilterModal = dynamic(() => import("./filter-modal"), {
   loading: () => <div className="animate-pulse">Loading...</div>
 });
 
@@ -21,20 +21,7 @@ export default function DigiNews() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [pageSize, setPageSize] = useState(10);
-  const [showToken, setShowToken] = useState(false);
   const { user } = useUser();
-  const { getToken } = useAuth();
-  const [jwtToken, setJwtToken] = useState("");
-
-  useEffect(() => {
-    const fetchToken = async () => {
-      if (user) {
-        const token = await getToken();
-        setJwtToken(token);
-      }
-    };
-    fetchToken();
-  }, [user, getToken]);
 
   // Reset to first page when filters or search change
   useEffect(() => {
@@ -89,7 +76,33 @@ export default function DigiNews() {
   const handleClearSearch = () => {
     setSearchQuery("");
   };
-
+  {user && (
+    <div className="mb-8 overflow-hidden bg-white rounded-lg shadow">
+      <div className="px-4 py-5 sm:px-6 bg-gray-50">
+        <h3 className="text-lg font-medium leading-6 text-gray-900">User Profile Information</h3>
+      </div>
+      <div className="border-t border-gray-200">
+        <dl>
+          <div className="px-4 py-3 grid grid-cols-3 gap-4 sm:px-6 bg-white">
+            <dt className="text-sm font-medium text-gray-500">Full name</dt>
+            <dd className="text-sm text-gray-900 col-span-2">{user.fullName || 'Not provided'}</dd>
+          </div>
+          <div className="px-4 py-3 grid grid-cols-3 gap-4 sm:px-6 bg-gray-50">
+            <dt className="text-sm font-medium text-gray-500">Email address</dt>
+            <dd className="text-sm text-gray-900 col-span-2">{user.primaryEmailAddress?.emailAddress || 'Not provided'}</dd>
+          </div>
+          <div className="px-4 py-3 grid grid-cols-3 gap-4 sm:px-6 bg-white">
+            <dt className="text-sm font-medium text-gray-500">User ID</dt>
+            <dd className="text-sm text-gray-900 col-span-2">{user.id}</dd>
+          </div>
+          <div className="px-4 py-3 grid grid-cols-3 gap-4 sm:px-6 bg-gray-50">
+            <dt className="text-sm font-medium text-gray-500">Created at</dt>
+            <dd className="text-sm text-gray-900 col-span-2">{new Date(user.createdAt).toLocaleString()}</dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+  )}
   // Calculate time difference for publication date
   const getTimeDifference = (pubDate) => {
     const now = new Date();
@@ -170,13 +183,6 @@ export default function DigiNews() {
         <div className="sr-only" role="status" aria-live="polite">
           {data.length} articoli trovati
         </div>
-        {user && (
-              <div className="mt-4 p-4 bg-gray-50 rounded-lg overflow-hidden">
-                <pre className="text-sm text-gray-700 whitespace-pre-wrap">
-                  {JSON.stringify(user, null, 2)}
-                </pre>
-              </div>
-            )}
         {data.map((item) => (
           <article
             key={`${item.id}-${item.pubDate}`}
@@ -215,7 +221,6 @@ export default function DigiNews() {
                 Pubblicata
               </span>
             )}
-            
           </article>
         ))}
 
@@ -245,29 +250,6 @@ export default function DigiNews() {
   return (
     <main className="container mx-auto px-4 py-8">
       <div className="max-w-3xl mx-auto">
-        {user && jwtToken && (
-          <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-            <button
-              onClick={() => setShowToken(!showToken)}
-              className="flex items-center justify-between w-full text-left"
-              aria-expanded={showToken}
-            >
-              <span className="font-medium">JWT Token</span>
-              {showToken ? (
-                <ChevronUp className="h-5 w-5 text-gray-500" />
-              ) : (
-                <ChevronDown className="h-5 w-5 text-gray-500" />
-              )}
-            </button>
-            {showToken && (
-              <div className="mt-2 p-3 bg-white rounded border border-gray-200 overflow-x-auto">
-                <pre className="text-sm text-gray-700 whitespace-pre-wrap break-all">
-                  {jwtToken}
-                </pre>
-              </div>
-            )}
-          </div>
-        )}
         <div className="flex items-center gap-4 mb-8">
           <div className="relative flex-1">
             <input
@@ -298,7 +280,7 @@ export default function DigiNews() {
             <Filter className="h-6 w-6" aria-hidden="true" />
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600">
-                {/* {user?.firstName || 'Guest'} */}
+                {user?.firstName || 'Guest'}
               </span>
             </div>
           </button>
@@ -316,8 +298,8 @@ export default function DigiNews() {
         <FilterModal
           isOpen={isFilterOpen}
           onClose={() => setIsFilterOpen(false)}
-          initialFilters={activeFilters}
-          onApply={(filters) => setActiveFilters(filters)}
+          activeFilters={activeFilters}
+          setActiveFilters={setActiveFilters}
         />
       )}
     </main>
