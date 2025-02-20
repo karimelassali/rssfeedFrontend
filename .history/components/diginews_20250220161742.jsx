@@ -170,13 +170,13 @@ export default function DigiNews() {
         <div className="sr-only" role="status" aria-live="polite">
           {data.length} articoli trovati
         </div>
-        {/* {user && (
+        {user && (
               <div className="mt-4 p-4 bg-gray-50 rounded-lg overflow-hidden">
                 <pre className="text-sm text-gray-700 whitespace-pre-wrap">
                   {JSON.stringify(user, null, 2)}
                 </pre>
               </div>
-            )} */}
+            )}
         {data.map((item) => (
           <article
             key={`${item.id}-${item.pubDate}`}
