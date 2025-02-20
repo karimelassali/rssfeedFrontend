@@ -40,6 +40,7 @@ export default function DigiNews() {
   useEffect(() => {
     setPage(1);
   }, [activeFilters, searchQuery]);
+
   // Fetch data when page, filters, or search changes
   useEffect(() => {
     const fetchData = async () => {
@@ -51,6 +52,7 @@ export default function DigiNews() {
           params: {
             page,
             pageSize,
+            searchQuery,
             activeFilters,
           },
         });
@@ -58,17 +60,8 @@ export default function DigiNews() {
         const newData = response.data.data;
         // Filter sources that start with https://
         const filteredData = newData.filter(item => item.source.startsWith('https://'));
-        
-        // Apply search filter to the filtered data if search query exists
-        const searchFilteredData = searchQuery
-          ? filteredData.filter(item =>
-              item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              item.source.toLowerCase().includes(searchQuery.toLowerCase())
-            )
-          : filteredData;
-
-        setHasMore(searchFilteredData.length >= pageSize);
-        setData((prev) => (page === 1 ? searchFilteredData : [...prev, ...searchFilteredData]));
+        setHasMore(filteredData.length >= pageSize);
+        setData((prev) => (page === 1 ? filteredData : [...prev, ...filteredData]));
       } catch (err) {
         console.error("Error fetching data:", err);
         setError("Failed to load news data");
@@ -80,6 +73,7 @@ export default function DigiNews() {
 
     fetchData();
   }, [page, pageSize, searchQuery, activeFilters]);
+
   // Handle "Load More" button click
   const handleLoadMore = () => {
     if (!isLoadingMore && hasMore) {
