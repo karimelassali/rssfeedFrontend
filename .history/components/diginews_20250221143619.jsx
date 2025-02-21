@@ -222,23 +222,21 @@ export default function DigiNews() {
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      // Extract domain from source URL
-                      const domain = new URL(item.source).hostname.replace('www.', '');
-                      toast.success(`${domain} :  added to your favorite sources!`, {
+                      toast.success(`${item.source} added to your favorite sources!`, {
                         position: "bottom-right",
                         duration: 3000,
-                          style: {
-                            background: "#4CAF50",
-                            color: "white",
-                            border: "none"
-                          }
-                        });
-                      }}
-                      className="bg-yellow-400 hover:bg-yellow-500 p-1.5 rounded-lg transition-colors cursor-pointer"
-                      aria-label="Subscribe to notifications from this source"
-                    >
-                      <Star className="h-4 w-4 text-white hover:scale-110 transform transition-transform" aria-hidden="true" />
-                    </button>
+      style: {
+        background: "#4CAF50",
+        color: "white",
+        border: "none"
+      }
+    });
+  }}
+  className="bg-yellow-400 hover:bg-yellow-500 p-1.5 rounded-lg transition-colors cursor-pointer"
+  aria-label="Subscribe to notifications from this source"
+>
+  <Star className="h-4 w-4 text-white hover:scale-110 transform transition-transform" aria-hidden="true" />
+</button>
                 </div>
               )}
             </div>

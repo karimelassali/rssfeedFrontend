@@ -68,5 +68,5 @@ export const metadata = {
 import ClientLayout from "./client-layout";
 
 export default function RootLayout({ children }) {
-  return <ClientLayout inter={inter}>{children}<Toaster /></ClientLayout>;
+  return <ClientLayout inter={inter}>{children}        <Toaster /></ClientLayout>;
 }

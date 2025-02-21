@@ -3,7 +3,7 @@ import { Search, Filter, XCircle, X, PenSquare, Loader2, ChevronDown, ChevronUp,
 import axios from "axios";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { Toaster , toast } from "sonner";
+import { toast } from "sonner";
 import DigiNewsSkeleton from "./ui/skeletons/diginews";
 import { UserButton, useUser, useAuth } from "@clerk/nextjs";
 // Lazy load the FilterModal component
@@ -159,7 +159,7 @@ export default function DigiNews() {
     if (data.length === 0 && (activeFilters.length > 0 || searchQuery)) {
       return (
         <div role="status" className="flex flex-col items-center justify-center p-8 text-center">
-          <Toaster />
+          Toaster
           <div className="mb-4 text-gray-400">
             <Filter className="h-12 w-12" aria-hidden="true" />
           </div>
@@ -222,23 +222,16 @@ export default function DigiNews() {
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      // Extract domain from source URL
-                      const domain = new URL(item.source).hostname.replace('www.', '');
-                      toast.success(`${domain} :  added to your favorite sources!`, {
+                      toast.success(`${item.source} added to your favorite sources!`, {
                         position: "bottom-right",
-                        duration: 3000,
-                          style: {
-                            background: "#4CAF50",
-                            color: "white",
-                            border: "none"
-                          }
-                        });
-                      }}
-                      className="bg-yellow-400 hover:bg-yellow-500 p-1.5 rounded-lg transition-colors cursor-pointer"
-                      aria-label="Subscribe to notifications from this source"
-                    >
-                      <Star className="h-4 w-4 text-white hover:scale-110 transform transition-transform" aria-hidden="true" />
-                    </button>
+                        duration: 3000
+                      });
+                    }}
+                    className="bg-yellow-400 hover:bg-yellow-500 p-1.5 rounded-lg transition-colors cursor-pointer"
+                    aria-label="Subscribe to notifications from this source"
+                  >
+                    <Star className="h-4 w-4 text-white hover:scale-110 transform transition-transform" aria-hidden="true" />
+                  </button>
                 </div>
               )}
             </div>

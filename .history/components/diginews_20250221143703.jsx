@@ -222,9 +222,7 @@ export default function DigiNews() {
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      // Extract domain from source URL
-                      const domain = new URL(item.source).hostname.replace('www.', '');
-                      toast.success(`${domain} :  added to your favorite sources!`, {
+                      toast.success(`${item.source} added to your favorite sources!`, {
                         position: "bottom-right",
                         duration: 3000,
                           style: {
