@@ -222,9 +222,6 @@ const getTimeDifference = (pubDate) => {
                   {getTimeDifference(item.pubDate)}
                 </div>
               </div>
-            </div>
-          </article>
-        ))}
         {hasMore && (
           <div className="text-center mt-4">
             <button

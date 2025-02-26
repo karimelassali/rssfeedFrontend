@@ -244,6 +244,25 @@ const getTimeDifference = (pubDate) => {
             </button>
           </div>
         )}
+        {hasMore && (
+          <div className="text-center mt-4">
+            <button
+              onClick={handleLoadMore}
+              disabled={isLoadingMore}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label={isLoadingMore ? "Caricamento in corso..." : "Carica altri articoli"}
+            >
+              {isLoadingMore ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+                  <span>Caricamento...</span>
+                </>
+              ) : (
+                "Carica altri"
+              )}
+            </button>
+          </div>
+        )}
       </div>
     );
   };

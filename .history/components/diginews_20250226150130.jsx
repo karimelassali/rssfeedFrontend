@@ -197,34 +197,48 @@ const getTimeDifference = (pubDate) => {
               <div className="bg-green-500 text-white p-1.5 rounded text-sm font-medium min-w-[28px] text-center" aria-hidden="true">
                 {item.source.charAt(0).toUpperCase()}
               </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <a
-                    href={item.source}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
-                  >
-                    {item.source}
-                  </a>
-                </div>
-                <h2 className="text-lg font-semibold mb-2">
-                  <a
-                    href={item.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:text-blue-600 transition-colors"
-                  >
-                    {item.title}
-                  </a>
-                </h2>
-                <div className="text-sm text-gray-500">
-                  {getTimeDifference(item.pubDate)}
-                </div>
-              </div>
-            </div>
-          </article>
-        ))}
+  const getTimeDifference = (pubDate) => {
+      const now = new Date();
+      const published = new Date(pubDate);
+      const diff = (now.getTime() - published.getTime()) / 1000;
+      const minutes = Math.floor(diff / 60);
+      const hours = Math.floor(minutes / 60);
+      const days = Math.floor(hours / 24);
+      const weeks = Math.floor(days / 7);
+      const months = Math.floor(days / 30.44); // Average month length
+  const padZero = (num) => String(num).padStart(2, '0');
+  const day = padZero(published.getDate());
+  const month = padZero(published.getMonth() + 1);
+  const year = published.getFullYear();
+  const hours24 = padZero(published.getHours());
+  const minutesTime = padZero(published.getMinutes());
+  const seconds = padZero(published.getSeconds());
+  const dateTimeString = `${day}/${month}/${year} alle ${hours24}:${minutesTime}:${seconds}`;
+  if (diff < 60) { // Less than a minute
+      return `${Math.floor(diff)} secondi fa (oggi alle ${hours24}:${minutesTime})`;
+  } else if (days === 0) { // Same day
+      if (hours > 0) {
+          const remainingMinutes = minutes % 60;
+          if (remainingMinutes > 0) {
+              return `${hours} ${hours === 1 ? "ora" : "ore"} e ${remainingMinutes} ${remainingMinutes === 1 ? "minuto" : "minuti"} fa (oggi alle ${hours24}:${minutesTime})`;
+          }
+          return `${hours} ${hours === 1 ? "ora" : "ore"} fa (oggi alle ${hours24}:${minutesTime})`;
+      } else {
+          return `${minutes} ${minutes === 1 ? "minuto" : "minuti"} fa (oggi alle ${hours24}:${minutesTime})`;
+      }
+  } else if (days === 1) { // Yesterday
+      return `ieri alle ${hours24}:${minutesTime}`;
+  } else if (days < 7) { // Less than a week
+      return `${days} ${days === 1 ? "giorno" : "giorni"} fa (${dateTimeString})`;
+  } else if (weeks < 4) { // Less than a month
+      return `${weeks} ${weeks === 1 ? "settimana" : "settimane"} fa (${dateTimeString})`;
+  } else if (months < 12) { // Less than a year
+      return `${months} ${months === 1 ? "mese" : "mesi"} fa (${dateTimeString})`;
+  } else { // More than a year
+      const years = Math.floor(months / 12);
+      return `${years} ${years === 1 ? "anno" : "anni"} fa (${dateTimeString})`;
+  }
+};
         {hasMore && (
           <div className="text-center mt-4">
             <button
