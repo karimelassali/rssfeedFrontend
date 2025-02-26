@@ -22,23 +22,9 @@ export default function DigiNews() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [pageSize, setPageSize] = useState(10);
-  const [authToken, setAuthToken] = useState(null);
-  const [userEmail, setUserEmail] = useState(null);
-  
-  useEffect(() => {
-    // Access localStorage only on client side
-    const token = window.localStorage.getItem('authToken');
-    const userStr = window.localStorage.getItem('user');
-    setAuthToken(token);
-    if (userStr) {
-      try {
-        const userData = JSON.parse(userStr);
-        setUserEmail(userData.email);
-      } catch (e) {
-        console.error('Error parsing user data:', e);
-      }
-    }
-  }, []);
+
+
+
   // Reset to first page when filters or search change
   useEffect(() => {
     setPage(1);
@@ -323,10 +309,10 @@ const getTimeDifference = (pubDate) => {
               <span className="text-sm font-medium">Filtri</span>
             </button>
             
-            {authToken ? (
+            {localStorage.getItem('authToken') ? (
               <div className="flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-lg">
                 <span className="text-sm text-blue-600">
-                  {userEmail}
+                  {localStorage.getItem('user') && JSON.parse(localStorage.getItem('user')).email}
                 </span>
               </div>
             ) : (

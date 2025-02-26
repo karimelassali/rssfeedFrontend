@@ -8,9 +8,8 @@ module.exports = {
     "./src/**/*.{js,ts,jsx,tsx}",
     "*.{js,ts,jsx,tsx,mdx}",
   ],
-  theme: {
+  theme: {pj
     container: {
-
       center: true,
       padding: "2rem",
       screens: {
@@ -76,3 +75,4 @@ module.exports = {
   },
   plugins: [require("tailwindcss-animate")],
 }
+

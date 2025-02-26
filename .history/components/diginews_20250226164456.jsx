@@ -22,28 +22,10 @@ export default function DigiNews() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [pageSize, setPageSize] = useState(10);
-  const [authToken, setAuthToken] = useState(null);
-  const [userEmail, setUserEmail] = useState(null);
-  
-  useEffect(() => {
-    // Access localStorage only on client side
-    const token = window.localStorage.getItem('authToken');
-    const userStr = window.localStorage.getItem('user');
-    setAuthToken(token);
-    if (userStr) {
-      try {
-        const userData = JSON.parse(userStr);
-        setUserEmail(userData.email);
-      } catch (e) {
-        console.error('Error parsing user data:', e);
-      }
-    }
-  }, []);
-  // Reset to first page when filters or search change
+
   useEffect(() => {
     setPage(1);
   }, [activeFilters, searchQuery]);
-  // Fetch data when page, filters, or search changes
   useEffect(() => {
     const fetchData = async () => {
       setIsLoadingMore(page > 1);
@@ -83,24 +65,36 @@ export default function DigiNews() {
 
     fetchData();
   }, [page, pageSize, searchQuery, activeFilters]);
-  // Handle "Load More" button click
   const handleLoadMore = () => {
     if (!isLoadingMore && hasMore) {
       setPage((prevPage) => prevPage + 1);
     }
   };
-
-  // Clear search and filters
   const handleClearAll = () => {
     setActiveFilters([]);
     setSearchQuery("");
   };
-
-  // Clear search input
   const handleClearSearch = () => {
     setSearchQuery("");
   };
-
+  useEffect(() => {
+    const checkUser = () => {
+      if (typeof window !== 'undefined') {
+        try {
+          const user = JSON.parse(localStorage.getItem('user'));
+          // You can add additional user validation here if needed
+          return user;
+        } catch (error) {
+          console.error('Error parsing user data:', error);
+          return null;
+        }
+      }
+      return null;
+    };
+    
+    const user = checkUser();
+    // You can set user state here if needed
+  }, []);
   // Calculate time difference for publication date
 const getTimeDifference = (pubDate) => {
     const now = new Date();
@@ -152,14 +146,11 @@ const getTimeDifference = (pubDate) => {
         return `${years} ${years === 1 ? "anno" : "anni"} fa (${dateTimeString})`;
     }
 };
-
-  // Render content based on loading, error, or data state
   const renderContent = () => {
     if (isLoading && page === 1) {
       return <DigiNewsSkeleton />;
     }
-
-    if (error) {
+  if (error) {
       return (
         <div role="alert" className="flex flex-col items-center justify-center p-8 text-center">
           <XCircle className="h-12 w-12 text-red-500 mb-4" aria-hidden="true" />
@@ -167,8 +158,7 @@ const getTimeDifference = (pubDate) => {
         </div>
       );
     }
-
-    if (data.length === 0 && (activeFilters.length > 0 || searchQuery)) {
+  if (data.length === 0 && (activeFilters.length > 0 || searchQuery)) {
       return (
         <div role="status" className="flex flex-col items-center justify-center p-8 text-center">
           <Toaster />
@@ -186,8 +176,7 @@ const getTimeDifference = (pubDate) => {
         </div>
       );
     }
-
-    return (
+  return (
       <div className="space-y-6">
         <div className="sr-only" role="status" aria-live="polite">
           {data.length} articoli trovati
@@ -208,62 +197,48 @@ const getTimeDifference = (pubDate) => {
               <div className="bg-green-500 text-white p-1.5 rounded text-sm font-medium min-w-[28px] text-center" aria-hidden="true">
                 {item.source.charAt(0).toUpperCase()}
               </div>
-
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium mb-1 truncate">
-                  {item.source}
-                </p>
-                <h2 className="text-base font-semibold mb-2 line-clamp-1">
-                  {item.title}
-                </h2>
-                <time dateTime={item.pubDate} className="text-sm text-gray-500 truncate">
-                  {getTimeDifference(item.pubDate)}
-                </time>
-              </div>
-
-              {!item.isPublished && (
-                <div className="flex gap-2">
-                  <Link 
-                    href={`/news/${item.id}`} 
-                    className="bg-green-400 p-1.5 rounded-lg"
-                    aria-label={`Modifica articolo: ${item.title}`}
-                  >
-                    <PenSquare className="h-4 w-4 text-white" aria-hidden="true" />
-                  </Link>
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      // Extract domain from source URL
-                      const domain = new URL(item.source).hostname.replace('www.', '');
-                      toast.success(`${domain} :  added to your favorite sources!`, {
-                        position: "bottom-right",
-                        duration: 3000,
-                          style: {
-                            background: "#4CAF50",
-                            color: "white",
-                            border: "none"
-                          }
-                        });
-                      }}
-                      className="bg-yellow-400 hover:bg-yellow-500 p-1.5 rounded-lg transition-colors cursor-pointer"
-                      aria-label="Subscribe to notifications from this source"
-                      >
-                      <Star className="h-4 w-4 text-white hover:scale-110 transform transition-transform" aria-hidden="true" />
-                    </button>
-                </div>
-              )}
-            </div>
-
-            {item.isPublished === 1 && (
-              <span className="absolute top-0 right-0 bg-orange-100 text-orange-600 px-2 py-0.5 rounded text-sm">
-                Pubblicata
-              </span>
-            )}
-            
-          </article>
-        ))}
-
+  const getTimeDifference = (pubDate) => {
+      const now = new Date();
+      const published = new Date(pubDate);
+      const diff = (now.getTime() - published.getTime()) / 1000;
+      const minutes = Math.floor(diff / 60);
+      const hours = Math.floor(minutes / 60);
+      const days = Math.floor(hours / 24);
+      const weeks = Math.floor(days / 7);
+      const months = Math.floor(days / 30.44); // Average month length
+  const padZero = (num) => String(num).padStart(2, '0');
+  const day = padZero(published.getDate());
+  const month = padZero(published.getMonth() + 1);
+  const year = published.getFullYear();
+  const hours24 = padZero(published.getHours());
+  const minutesTime = padZero(published.getMinutes());
+  const seconds = padZero(published.getSeconds());
+  const dateTimeString = `${day}/${month}/${year} alle ${hours24}:${minutesTime}:${seconds}`;
+  if (diff < 60) { // Less than a minute
+      return `${Math.floor(diff)} secondi fa (oggi alle ${hours24}:${minutesTime})`;
+  } else if (days === 0) { // Same day
+      if (hours > 0) {
+          const remainingMinutes = minutes % 60;
+          if (remainingMinutes > 0) {
+              return `${hours} ${hours === 1 ? "ora" : "ore"} e ${remainingMinutes} ${remainingMinutes === 1 ? "minuto" : "minuti"} fa (oggi alle ${hours24}:${minutesTime})`;
+          }
+          return `${hours} ${hours === 1 ? "ora" : "ore"} fa (oggi alle ${hours24}:${minutesTime})`;
+      } else {
+          return `${minutes} ${minutes === 1 ? "minuto" : "minuti"} fa (oggi alle ${hours24}:${minutesTime})`;
+      }
+  } else if (days === 1) { // Yesterday
+      return `ieri alle ${hours24}:${minutesTime}`;
+  } else if (days < 7) { // Less than a week
+      return `${days} ${days === 1 ? "giorno" : "giorni"} fa (${dateTimeString})`;
+  } else if (weeks < 4) { // Less than a month
+      return `${weeks} ${weeks === 1 ? "settimana" : "settimane"} fa (${dateTimeString})`;
+  } else if (months < 12) { // Less than a year
+      return `${months} ${months === 1 ? "mese" : "mesi"} fa (${dateTimeString})`;
+  } else { // More than a year
+      const years = Math.floor(months / 12);
+      return `${years} ${years === 1 ? "anno" : "anni"} fa (${dateTimeString})`;
+  }
+};
         {hasMore && (
           <div className="text-center mt-4">
             <button
@@ -286,7 +261,6 @@ const getTimeDifference = (pubDate) => {
       </div>
     );
   };
-
   return (
     <main className="container mx-auto px-4 py-8 pb-20 relative min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -323,10 +297,10 @@ const getTimeDifference = (pubDate) => {
               <span className="text-sm font-medium">Filtri</span>
             </button>
             
-            {authToken ? (
+            {localStorage.getItem('authToken') ? (
               <div className="flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-lg">
                 <span className="text-sm text-blue-600">
-                  {userEmail}
+                  {localStorage.getItem('user') && JSON.parse(localStorage.getItem('user')).email}
                 </span>
               </div>
             ) : (

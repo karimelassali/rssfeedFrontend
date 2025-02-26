@@ -10,7 +10,6 @@ module.exports = {
   ],
   theme: {
     container: {
-
       center: true,
       padding: "2rem",
       screens: {
@@ -76,3 +75,4 @@ module.exports = {
   },
   plugins: [require("tailwindcss-animate")],
 }
+
