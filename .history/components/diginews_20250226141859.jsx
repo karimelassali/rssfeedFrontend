@@ -274,71 +274,59 @@ const getTimeDifference = (pubDate) => {
   };
 
   return (
-    <main className="container mx-auto px-4 py-8 pb-20 relative min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex flex-col md:flex-row items-center gap-4 mb-8 sticky top-0 bg-white z-10 p-4 rounded-lg shadow-sm">
-          <div className="relative flex-1 w-full">
+    <main className="container mx-auto px-4 py-8 pb-20 relative min-h-screen">
+      <div className="max-w-3xl mx-auto space-y-6">
+
+        <div className="flex items-center gap-4 mb-8 sticky top-0 bg-white z-10 py-4">
+          <div className="relative flex-1">
             <input
               type="search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cerca articoli..."
-              className="w-full pl-10 pr-12 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
               aria-label="Cerca articoli"
             />
+            {localStorage.getItem('authToken') || (
+              <Link href="/login" className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-500">
+                Login
+              </Link>
+            )}
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" aria-hidden="true" />
             {searchQuery && (
               <button
                 onClick={handleClearSearch}
-                className="absolute right-3 top-1/2 -translate-y-1/2 hover:text-gray-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2"
                 aria-label="Cancella ricerca"
               >
                 <X className="h-5 w-5 text-gray-400" aria-hidden="true" />
               </button>
             )}
           </div>
-          
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setIsFilterOpen(true)}
-              className="p-3 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2 border border-gray-200"
-              aria-label="Apri filtri"
-              aria-expanded={isFilterOpen}
-            >
-              <Filter className="h-5 w-5" aria-hidden="true" />
-              <span className="text-sm font-medium">Filtri</span>
-            </button>
-            
-            {localStorage.getItem('authToken') ? (
-              <div className="flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-lg">
-                <span className="text-sm text-blue-600">
-                  {localStorage.getItem('user') && JSON.parse(localStorage.getItem('user')).email}
-                </span>
-              </div>
-            ) : (
-              <Link 
-                href="/sign-in" 
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium"
-              >
-                Login
-              </Link>
-            )}
-          </div>
-        </div>
+          <button
+            onClick={() => setIsFilterOpen(true)}
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            aria-label="Apri filtri"
+            aria-expanded={isFilterOpen}
+          >
+            <Filter className="h-6 w-6" aria-hidden="true" />
+          </button>
+          Hello , {localStorage.getItem('user') && JSON.parse(localStorage.getItem('user')).email }
 
-        <div className="bg-white rounded-lg shadow-sm p-4 overflow-y-auto">
-          {renderContent()}
         </div>
-      </div>
+    <div className="overflow-y-auto">
+      {renderContent()}
+    </div>
+  </div>
 
-      {isFilterOpen && (
-        <FilterModal
-          isOpen={isFilterOpen}
-          onClose={() => setIsFilterOpen(false)}
-          initialFilters={activeFilters}
-          onApply={(filters) => setActiveFilters(filters)}
-        />
-      )}
-    </main>
+  {isFilterOpen && (
+    <FilterModal
+      isOpen={isFilterOpen}
+      onClose={() => setIsFilterOpen(false)}
+      initialFilters={activeFilters}
+      onApply={(filters) => setActiveFilters(filters)}
+    />
+  )}
+</main>
   );
 }

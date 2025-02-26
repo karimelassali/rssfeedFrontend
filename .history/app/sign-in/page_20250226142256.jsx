@@ -84,7 +84,7 @@ function Page() {
           </div>
 
           <div className="flex items-center justify-between">
-            {/* <div className="flex items-center">
+            <div className="flex items-center">
               <input
                 id="remember-me"
                 name="remember-me"
@@ -94,10 +94,10 @@ function Page() {
               <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
                 Remember me
               </label>
-            </div> */}
-            {/* <a href="#" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+            </div>
+            <a href="#" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
               Forgot password?
-            </a> */}
+            </a>
           </div>
 
           <button
@@ -112,12 +112,12 @@ function Page() {
             )}
           </button>
 
-          {/* <p className="text-center text-sm text-gray-600">
+          <p className="text-center text-sm text-gray-600">
             Don't have an account?{' '}
             <a href="/sign-up" className="font-medium text-indigo-600 hover:text-indigo-500">
               Sign up
             </a>
-          </p> */}
+          </p>
         </form>
       </div>
     </div>

@@ -95,9 +95,9 @@ function Page() {
                 Remember me
               </label>
             </div> */}
-            {/* <a href="#" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+            <a href="#" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
               Forgot password?
-            </a> */}
+            </a>
           </div>
 
           <button
@@ -112,12 +112,12 @@ function Page() {
             )}
           </button>
 
-          {/* <p className="text-center text-sm text-gray-600">
+          <p className="text-center text-sm text-gray-600">
             Don't have an account?{' '}
             <a href="/sign-up" className="font-medium text-indigo-600 hover:text-indigo-500">
               Sign up
             </a>
-          </p> */}
+          </p>
         </form>
       </div>
     </div>

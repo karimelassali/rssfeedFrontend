@@ -84,7 +84,7 @@ function Page() {
           </div>
 
           <div className="flex items-center justify-between">
-            {/* <div className="flex items-center">
+            <div className="flex items-center">
               <input
                 id="remember-me"
                 name="remember-me"
@@ -94,16 +94,16 @@ function Page() {
               <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
                 Remember me
               </label>
-            </div> */}
-            {/* <a href="#" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+            </div>
+            <a href="#" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
               Forgot password?
-            </a> */}
+            </a>
           </div>
 
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-500 hover:bg-green-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition duration-150"
+            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gre hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition duration-150"
           >
             {isLoading ? (
               <Loader2 className="h-5 w-5 animate-spin" />
@@ -112,12 +112,12 @@ function Page() {
             )}
           </button>
 
-          {/* <p className="text-center text-sm text-gray-600">
+          <p className="text-center text-sm text-gray-600">
             Don't have an account?{' '}
             <a href="/sign-up" className="font-medium text-indigo-600 hover:text-indigo-500">
               Sign up
             </a>
-          </p> */}
+          </p>
         </form>
       </div>
     </div>
