@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, Filter, XCircle, X  , PenSquare, Loader2, ChevronDown, ChevronUp, Star } from "lucide-react";
+import { Search, Filter, XCircle, X, PenSquare, Loader2, ChevronDown, ChevronUp, Star } from "lucide-react";
 import axios from "axios";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -22,8 +22,18 @@ export default function DigiNews() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [pageSize, setPageSize] = useState(10);
+  const [showToken, setShowToken] = useState(false);
+  const [jwtToken, setJwtToken] = useState("");
 
-
+  useEffect(() => {
+    const fetchToken = async () => {
+      if (user) {
+        const token = await getToken();
+        setJwtToken(token);
+      }
+    };
+    fetchToken();
+  }, [user, getToken]);
 
   // Reset to first page when filters or search change
   useEffect(() => {
@@ -276,7 +286,29 @@ const getTimeDifference = (pubDate) => {
   return (
     <main className="container mx-auto px-4 py-8 pb-20 relative min-h-screen">
       <div className="max-w-3xl mx-auto space-y-6">
-
+        {user && jwtToken && (
+          <div className="mb-6 p-4 bg-gray-50 rounded-lg overflow-hidden">
+            <button
+              onClick={() => setShowToken(!showToken)}
+              className="flex items-center justify-between w-full text-left"
+              aria-expanded={showToken}
+            >
+              <span className="font-medium">JWT Token</span>
+              {showToken ? (
+                <ChevronUp className="h-5 w-5 text-gray-500" />
+              ) : (
+                <ChevronDown className="h-5 w-5 text-gray-500" />
+              )}
+            </button>
+            {showToken && (
+              <div className="mt-2 p-3 bg-white rounded border border-gray-200 overflow-x-auto max-h-40">
+                <pre className="text-sm text-gray-700 whitespace-pre-wrap break-all">
+                  {jwtToken}
+                </pre>
+              </div>
+            )}
+          </div>
+        )}
         <div className="flex items-center gap-4 mb-8 sticky top-0 bg-white z-10 py-4">
           <div className="relative flex-1">
             <input
@@ -287,14 +319,7 @@ const getTimeDifference = (pubDate) => {
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
               aria-label="Cerca articoli"
             />
-            {!localStorage.getItem('authToken') && (
-              <Link href="/sign-in" className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-500">
-               Login
-              </Link>
-            )}
-
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" aria-hidden="true" />
-            Hey {localStorage.getItem('username')}
             {searchQuery && (
               <button
                 onClick={handleClearSearch}
@@ -313,7 +338,11 @@ const getTimeDifference = (pubDate) => {
           >
             <Filter className="h-6 w-6" aria-hidden="true" />
           </button>
-
+          <UserButton afterSignOutUrl="/" appearance={{
+            elements: {
+              avatarBox: "w-10 h-10 rounded-full hover:opacity-80 transition-opacity"
+            }
+          }} />
         </div>
     <div className="overflow-y-auto">
       {renderContent()}
