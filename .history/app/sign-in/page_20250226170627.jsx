@@ -16,13 +16,11 @@ function Page() {
     setError('');
 
     try {
-      const response = await axios.post(`${process.env.API_URL}/api/sign-in`, formData);
+      const response = await axios.post(`${env.API_URL}api/sign-in`, formData);
       if (response.data.token) {
         localStorage.setItem('authToken', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
         router.push('/');
-      } else {
-        setError('Invalid credentials. Please try again.');
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed. Please try again.');

@@ -16,13 +16,11 @@ function Page() {
     setError('');
 
     try {
-      const response = await axios.post(`${process.env.API_URL}/api/sign-in`, formData);
+      const response = await axios.post('http://localhost:8000/api/sign-in', formData);
       if (response.data.token) {
         localStorage.setItem('authToken', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
         router.push('/');
-      } else {
-        setError('Invalid credentials. Please try again.');
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed. Please try again.');
@@ -36,7 +34,7 @@ function Page() {
       <div className="max-w-md w-full space-y-8 p-10 bg-white rounded-xl shadow-2xl">
         <div>
           <h2 className="mt-4 text-center text-3xl font-bold text-gray-900">
-            Diginews - Login
+            Diginews Login
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Sign in to your account

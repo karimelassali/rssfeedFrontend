@@ -16,7 +16,7 @@ function Page() {
     setError('');
 
     try {
-      const response = await axios.post(`${process.env.API_URL}/api/sign-in`, formData);
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/sign-in`, formData);
       if (response.data.token) {
         localStorage.setItem('authToken', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
