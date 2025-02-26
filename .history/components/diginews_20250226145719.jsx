@@ -88,10 +88,8 @@ export default function DigiNews() {
   };
 
   useEffect(()=>{
-    if(typeof window !== 'undefined') {
-      const user = JSON.parse(localStorage.getItem('user'));
-    }
-  },[])
+
+  },)
 
   // Calculate time difference for publication date
 const getTimeDifference = (pubDate) => {

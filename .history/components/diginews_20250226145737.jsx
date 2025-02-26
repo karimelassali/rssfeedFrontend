@@ -90,6 +90,10 @@ export default function DigiNews() {
   useEffect(()=>{
     if(typeof window !== 'undefined') {
       const user = JSON.parse(localStorage.getItem('user'));
+      if (user && user.role === 'admin') {
+        // Redirect to the admin dashboard
+        window.location.href = '/admin';
+      }
     }
   },[])
 
