@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { Search, Filter, XCircle, X, PenSquare, Loader2, ChevronDown, ChevronUp, Star } from "lucide-react";
+import { Search, Filter, XCircle, X  , PenSquare, Loader2, ChevronDown, ChevronUp, Star } from "lucide-react";
 import axios from "axios";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { Toaster, toast } from "sonner";
+import { Toaster , toast } from "sonner";
 import DigiNewsSkeleton from "./ui/skeletons/diginews";
 
 // Lazy load the FilterModal component
@@ -16,12 +16,15 @@ export default function DigiNews() {
   const [activeFilters, setActiveFilters] = useState([]);
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [pageSize, setPageSize] = useState(10);
   const [authToken, setAuthToken] = useState(null);
   const [userEmail, setUserEmail] = useState(null);
-  const [debugInfo, setDebugInfo] = useState(null);
-  const [loadMorePage , setLoadMorePage] = useState(1);  
+  
   useEffect(() => {
     // Access localStorage only on client side
     const token = window.localStorage.getItem('authToken');
@@ -36,75 +39,62 @@ export default function DigiNews() {
       }
     }
   }, []);
-  
-  // Reset data when filters or search change
+  // Reset to first page when filters or search change
   useEffect(() => {
-    setData([]); // Clear existing data when filters or search changes
+    setPage(1);
   }, [activeFilters, searchQuery]);
-  
-
-  const fetchData = async () => {
-    setIsLoading(true);
-
-    try {
-      const response = await axios.get(`/api/articles?page=${loadMorePage}`, {
-        params: {
-          activeFilters: JSON.stringify(activeFilters),
-          search: searchQuery
-        },
-      });
-
-      // Log the full response for debugging
-      console.log("API Response:", response.data);
-      
-      // Store debug info
-      setDebugInfo({
-        responseData: response.data
-      });
-
-      // Check if response.data has the expected structure
-      if (!response.data || (!response.data.data && !Array.isArray(response.data))) {
-        console.error("Unexpected response structure:", response.data);
-        toast.error("Unexpected data format received", {
-          position: "bottom-right",
-          duration: 3000
-        });
-        return;
-      }
-
-      // Handle both Laravel pagination structure and direct array responses
-      const newData = Array.isArray(response.data) 
-        ? response.data 
-        : (response.data.data || []);
-      
-      // Filter sources that start with https://
-      const filteredData = newData.filter(item => 
-        item.source && typeof item.source === 'string' && item.source.startsWith('https://')
-      );
-
-      console.log("Filtered data length:", filteredData.length);
-      
-      console.log("Filtered data length:", filteredData.length);
-      setData(filteredData);
-    } catch (err) {
-      console.error("Error fetching data:", err);
-      setError("Failed to load news data: " + (err.message || "Unknown error"));
-      toast.error("Failed to load more data: " + (err.message || "Unknown error"), {
-        position: "bottom-right",
-        duration: 3000
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  // Fetch data when filters or search changes
+  // Fetch data when page, filters, or search changes
   useEffect(() => {
-  
+    const fetchData = async () => {
+      setIsLoadingMore(page > 1);
+      setIsLoading(page === 1);
+
+      try {
+        const response = await axios.get(`/api/articles`, {
+          params: {
+            page,
+            pageSize,
+            activeFilters,
+            search: searchQuery // Add search query to backend params
+          },
+        });
+
+        // Extract data and pagination info from response
+        const { data: responseData, current_page, last_page } = response.data;
+        
+        // Filter sources that start with https://
+        const filteredData = responseData.filter(item => item.source.startsWith('https://'));
+
+        // Update hasMore based on current page and last page
+        setHasMore(current_page < last_page);
+        
+        // Update data state based on current page
+        setData(prevData => {
+          if (page === 1) {
+            return filteredData;
+          }
+          // Ensure no duplicates when appending new data
+          const existingIds = new Set(prevData.map(item => item.id));
+          const uniqueNewData = filteredData.filter(item => !existingIds.has(item.id));
+          return [...prevData, ...uniqueNewData];
+        });
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        setError("Failed to load news data");
+      } finally {
+        setIsLoading(false);
+        setIsLoadingMore(false);
+      }
+    };
 
     fetchData();
-  }, [searchQuery, activeFilters]);
-  
-
+  }, [page, pageSize, searchQuery, activeFilters]);
+  // Handle "Load More" button click
+  const handleLoadMore = () => {
+    if (!isLoadingMore && hasMore) {
+      setPage((prevPage) => prevPage + 1);
+    }
+  };
 
   // Clear search and filters
   const handleClearAll = () => {
@@ -118,7 +108,7 @@ export default function DigiNews() {
   };
 
   // Calculate time difference for publication date
-  const getTimeDifference = (pubDate) => {
+const getTimeDifference = (pubDate) => {
     const now = new Date();
     const published = new Date(pubDate);
     const diff = (now.getTime() - published.getTime()) / 1000;
@@ -167,16 +157,11 @@ export default function DigiNews() {
         const years = Math.floor(months / 12);
         return `${years} ${years === 1 ? "anno" : "anni"} fa (${dateTimeString})`;
     }
-  };
+};
 
-
-  const handleLoadMore = ()=>{
-    setLoadMorePage(loadMorePage + 1);
-    fetchData();
-  }
   // Render content based on loading, error, or data state
   const renderContent = () => {
-    if (isLoading) {
+    if (isLoading && page === 1) {
       return <DigiNewsSkeleton />;
     }
 
@@ -213,25 +198,21 @@ export default function DigiNews() {
         <div className="sr-only" role="status" aria-live="polite">
           {data.length} articoli trovati
         </div>
-        
-        {/* Show debugging info in dev environment */}
-        {process.env.NODE_ENV === 'development' && debugInfo && (
-          <div className="p-4 bg-gray-100 rounded-lg mb-4 text-xs overflow-auto max-h-40">
-            <details>
-              <summary className="cursor-pointer font-bold">Debug Info</summary>
-              <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
-            </details>
-          </div>
-        )}
-        
-        {data.map((item, index) => (
+        {/* {user && (
+              <div className="mt-4 p-4 bg-gray-50 rounded-lg overflow-hidden">
+                <pre className="text-sm text-gray-700 whitespace-pre-wrap">
+                  {JSON.stringify(user, null, 2)}
+                </pre>
+              </div>
+            )} */}
+        {data.map((item) => (
           <article
-            key={`${item.id || index}-${item.pubDate || 'no-date'}`}
+            key={`${item.id}-${item.pubDate}`}
             className="border-b border-gray-200 pb-6 last:border-0 relative"
           >
             <div className="flex items-start gap-3">
               <div className="bg-green-500 text-white p-1.5 rounded text-sm font-medium min-w-[28px] text-center" aria-hidden="true">
-                {item.source && item.source.charAt(0).toUpperCase()}
+                {item.source.charAt(0).toUpperCase()}
               </div>
 
               <div className="flex-1 min-w-0">
@@ -241,11 +222,9 @@ export default function DigiNews() {
                 <h2 className="text-base font-semibold mb-2 line-clamp-1">
                   {item.title}
                 </h2>
-                {item.pubDate && (
-                  <time dateTime={item.pubDate} className="text-sm text-gray-500 truncate">
-                    {getTimeDifference(item.pubDate)}
-                  </time>
-                )}
+                <time dateTime={item.pubDate} className="text-sm text-gray-500 truncate">
+                  {getTimeDifference(item.pubDate)}
+                </time>
               </div>
 
               {!item.isPublished && (
@@ -261,31 +240,23 @@ export default function DigiNews() {
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      try {
-                        // Extract domain from source URL
-                        const domain = new URL(item.source).hostname.replace('www.', '');
-                        toast.success(`${domain} :  added to your favorite sources!`, {
-                          position: "bottom-right",
-                          duration: 3000,
+                      // Extract domain from source URL
+                      const domain = new URL(item.source).hostname.replace('www.', '');
+                      toast.success(`${domain} :  added to your favorite sources!`, {
+                        position: "bottom-right",
+                        duration: 3000,
                           style: {
                             background: "#4CAF50",
                             color: "white",
                             border: "none"
                           }
                         });
-                      } catch (err) {
-                        console.error("Error processing source URL:", err);
-                        toast.error("Invalid source URL", {
-                          position: "bottom-right",
-                          duration: 3000
-                        });
-                      }
-                    }}
-                    className="bg-yellow-400 hover:bg-yellow-500 p-1.5 rounded-lg transition-colors cursor-pointer"
-                    aria-label="Subscribe to notifications from this source"
-                  >
-                    <Star className="h-4 w-4 text-white hover:scale-110 transform transition-transform" aria-hidden="true" />
-                  </button>
+                      }}
+                      className="bg-yellow-400 hover:bg-yellow-500 p-1.5 rounded-lg transition-colors cursor-pointer"
+                      aria-label="Subscribe to notifications from this source"
+                      >
+                      <Star className="h-4 w-4 text-white hover:scale-110 transform transition-transform" aria-hidden="true" />
+                    </button>
                 </div>
               )}
             </div>
@@ -298,30 +269,32 @@ export default function DigiNews() {
             
           </article>
         ))}
-        <button 
-          onClick={() => handleLoadMore()}
-          className="w-full mt-4 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium rounded-lg shadow-md hover:from-blue-600 hover:to-blue-700 transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="h-5 w-5 animate-spin" />
-              <span>Loading...</span>
-            </>
-          ) : (
-            <>
-              <ChevronDown className="h-5 w-5" />
-              <span>Load More Articles</span>
-            </>
-          )}
-        </button>
 
+        {hasMore && (
+          <div className="text-center mt-4">
+            <button
+              onClick={handleLoadMore}
+              disabled={isLoadingMore}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label={isLoadingMore ? "Caricamento in corso..." : "Carica altri articoli"}
+            >
+              {isLoadingMore ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+                  <span>Caricamento...</span>
+                </>
+              ) : (
+                "Carica altri"
+              )}
+            </button>
+          </div>
+        )}
       </div>
     );
   };
 
   return (
     <main className="container mx-auto px-4 py-8 pb-20 relative min-h-screen bg-gray-50">
-      <Toaster />
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex flex-col md:flex-row items-center gap-4 mb-8 sticky top-0 bg-white z-10 p-4 rounded-lg shadow-sm">
           <div className="relative flex-1 w-full">

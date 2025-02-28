@@ -298,21 +298,8 @@ export default function DigiNews() {
             
           </article>
         ))}
-        <button 
-          onClick={() => handleLoadMore()}
-          className="w-full mt-4 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium rounded-lg shadow-md hover:from-blue-600 hover:to-blue-700 transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="h-5 w-5 animate-spin" />
-              <span>Loading...</span>
-            </>
-          ) : (
-            <>
-              <ChevronDown className="h-5 w-5" />
-              <span>Load More Articles</span>
-            </>
-          )}
+        <button  >
+          Load more
         </button>
 
       </div>

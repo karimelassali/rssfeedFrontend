@@ -21,7 +21,8 @@ export default function DigiNews() {
   const [authToken, setAuthToken] = useState(null);
   const [userEmail, setUserEmail] = useState(null);
   const [debugInfo, setDebugInfo] = useState(null);
-  const [loadMorePage , setLoadMorePage] = useState(1);  
+  const [loadMorePage,setLoadMorePage] = useState(1);
+  
   useEffect(() => {
     // Access localStorage only on client side
     const token = window.localStorage.getItem('authToken');
@@ -42,12 +43,12 @@ export default function DigiNews() {
     setData([]); // Clear existing data when filters or search changes
   }, [activeFilters, searchQuery]);
   
-
+  // Fetch data when filters or search changes
   const fetchData = async () => {
     setIsLoading(true);
 
     try {
-      const response = await axios.get(`/api/articles?page=${loadMorePage}`, {
+      const response = await axios.get(`/api/articles/${}`, {
         params: {
           activeFilters: JSON.stringify(activeFilters),
           search: searchQuery
@@ -97,10 +98,9 @@ export default function DigiNews() {
       setIsLoading(false);
     }
   };
-  // Fetch data when filters or search changes
-  useEffect(() => {
-  
 
+  useEffect(() => {
+    
     fetchData();
   }, [searchQuery, activeFilters]);
   
@@ -170,11 +170,14 @@ export default function DigiNews() {
   };
 
 
-  const handleLoadMore = ()=>{
+  const handleLoadMore = () =>{
     setLoadMorePage(loadMorePage + 1);
     fetchData();
   }
+
   // Render content based on loading, error, or data state
+
+
   const renderContent = () => {
     if (isLoading) {
       return <DigiNewsSkeleton />;
@@ -298,22 +301,7 @@ export default function DigiNews() {
             
           </article>
         ))}
-        <button 
-          onClick={() => handleLoadMore()}
-          className="w-full mt-4 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium rounded-lg shadow-md hover:from-blue-600 hover:to-blue-700 transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="h-5 w-5 animate-spin" />
-              <span>Loading...</span>
-            </>
-          ) : (
-            <>
-              <ChevronDown className="h-5 w-5" />
-              <span>Load More Articles</span>
-            </>
-          )}
-        </button>
+
 
       </div>
     );
@@ -376,6 +364,12 @@ export default function DigiNews() {
         <div className="bg-white rounded-lg shadow-sm p-4 overflow-y-auto">
           {renderContent()}
         </div>
+      </div>
+
+      <div>
+        <button onClick={()=>handleLoadMore} >
+          Load More
+        </button>
       </div>
 
       {isFilterOpen && (

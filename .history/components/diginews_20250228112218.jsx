@@ -16,12 +16,16 @@ export default function DigiNews() {
   const [activeFilters, setActiveFilters] = useState([]);
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [pageSize, setPageSize] = useState(10);
   const [authToken, setAuthToken] = useState(null);
   const [userEmail, setUserEmail] = useState(null);
   const [debugInfo, setDebugInfo] = useState(null);
-  const [loadMorePage , setLoadMorePage] = useState(1);  
+  
   useEffect(() => {
     // Access localStorage only on client side
     const token = window.localStorage.getItem('authToken');
@@ -37,74 +41,113 @@ export default function DigiNews() {
     }
   }, []);
   
-  // Reset data when filters or search change
+  // Reset to first page when filters or search change
   useEffect(() => {
+    setPage(1);
     setData([]); // Clear existing data when filters or search changes
   }, [activeFilters, searchQuery]);
   
+  // Fetch data when page, filters, or search changes
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoadingMore(page > 1);
+      setIsLoading(page === 1);
 
-  const fetchData = async () => {
-    setIsLoading(true);
+      try {
+        // Log current page for debugging
+        console.log("Fetching data for page:", page);
+        
+        const response = await axios.get(`/api/articles`, {
+          params: {
+            page,
+            pageSize,
+            activeFilters: JSON.stringify(activeFilters),
+            search: searchQuery
+          },
+        });
 
-    try {
-      const response = await axios.get(`/api/articles?page=${loadMorePage}`, {
-        params: {
-          activeFilters: JSON.stringify(activeFilters),
-          search: searchQuery
-        },
-      });
+        // Log the full response for debugging
+        console.log("API Response:", response.data);
+        
+        // Store debug info
+        setDebugInfo({
+          currentPage: page,
+          responseData: response.data
+        });
 
-      // Log the full response for debugging
-      console.log("API Response:", response.data);
-      
-      // Store debug info
-      setDebugInfo({
-        responseData: response.data
-      });
+        // Check if response.data has the expected structure
+        if (!response.data || (!response.data.data && !Array.isArray(response.data))) {
+          console.error("Unexpected response structure:", response.data);
+          toast.error("Unexpected data format received", {
+            position: "bottom-right",
+            duration: 3000
+          });
+          return;
+        }
 
-      // Check if response.data has the expected structure
-      if (!response.data || (!response.data.data && !Array.isArray(response.data))) {
-        console.error("Unexpected response structure:", response.data);
-        toast.error("Unexpected data format received", {
+        // Handle both Laravel pagination structure and direct array responses
+        const newData = Array.isArray(response.data) 
+          ? response.data 
+          : (response.data.data || []);
+        
+        // Filter sources that start with https://
+        const filteredData = newData.filter(item => 
+          item.source && typeof item.source === 'string' && item.source.startsWith('https://')
+        );
+
+        console.log("Filtered data length:", filteredData.length);
+        
+        // Update hasMore based on the response
+        // For Laravel pagination structure
+        if (response.data.current_page && response.data.last_page) {
+          setHasMore(response.data.current_page < response.data.last_page);
+        } else {
+          // For array responses or custom pagination
+          setHasMore(filteredData.length >= pageSize);
+        }
+        
+        // Log existing data and new data for debugging
+        console.log("Existing data length:", data.length);
+        console.log("New filtered data:", filteredData);
+        
+        // Update data state based on current page
+        setData(prevData => {
+          if (page === 1) {
+            return filteredData;
+          }
+          
+          // Create a Set of existing IDs to prevent duplicates
+          const existingIds = new Set(prevData.map(item => item.id));
+          const uniqueNewData = filteredData.filter(item => !existingIds.has(item.id));
+          
+          console.log("Unique new data:", uniqueNewData);
+          
+          // Return combined data
+          return [...prevData, ...uniqueNewData];
+        });
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        setError("Failed to load news data: " + (err.message || "Unknown error"));
+        toast.error("Failed to load more data: " + (err.message || "Unknown error"), {
           position: "bottom-right",
           duration: 3000
         });
-        return;
+      } finally {
+        setIsLoading(false);
+        setIsLoadingMore(false);
       }
-
-      // Handle both Laravel pagination structure and direct array responses
-      const newData = Array.isArray(response.data) 
-        ? response.data 
-        : (response.data.data || []);
-      
-      // Filter sources that start with https://
-      const filteredData = newData.filter(item => 
-        item.source && typeof item.source === 'string' && item.source.startsWith('https://')
-      );
-
-      console.log("Filtered data length:", filteredData.length);
-      
-      console.log("Filtered data length:", filteredData.length);
-      setData(filteredData);
-    } catch (err) {
-      console.error("Error fetching data:", err);
-      setError("Failed to load news data: " + (err.message || "Unknown error"));
-      toast.error("Failed to load more data: " + (err.message || "Unknown error"), {
-        position: "bottom-right",
-        duration: 3000
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  // Fetch data when filters or search changes
-  useEffect(() => {
-  
+    };
 
     fetchData();
-  }, [searchQuery, activeFilters]);
+  }, [page, pageSize, searchQuery, activeFilters]);
   
-
+  // Handle "Load More" button click
+  const handleLoadMore = () => {
+    if (!isLoadingMore && hasMore) {
+      console.log("Loading more... Current page:", page);
+      setPage(prevPage => prevPage + 1);
+    }
+  };
 
   // Clear search and filters
   const handleClearAll = () => {
@@ -169,14 +212,9 @@ export default function DigiNews() {
     }
   };
 
-
-  const handleLoadMore = ()=>{
-    setLoadMorePage(loadMorePage + 1);
-    fetchData();
-  }
   // Render content based on loading, error, or data state
   const renderContent = () => {
-    if (isLoading) {
+    if (isLoading && page === 1) {
       return <DigiNewsSkeleton />;
     }
 
@@ -218,7 +256,7 @@ export default function DigiNews() {
         {process.env.NODE_ENV === 'development' && debugInfo && (
           <div className="p-4 bg-gray-100 rounded-lg mb-4 text-xs overflow-auto max-h-40">
             <details>
-              <summary className="cursor-pointer font-bold">Debug Info</summary>
+              <summary className="cursor-pointer font-bold">Debug Info (Page {debugInfo.currentPage})</summary>
               <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
             </details>
           </div>
@@ -298,23 +336,26 @@ export default function DigiNews() {
             
           </article>
         ))}
-        <button 
-          onClick={() => handleLoadMore()}
-          className="w-full mt-4 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium rounded-lg shadow-md hover:from-blue-600 hover:to-blue-700 transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="h-5 w-5 animate-spin" />
-              <span>Loading...</span>
-            </>
-          ) : (
-            <>
-              <ChevronDown className="h-5 w-5" />
-              <span>Load More Articles</span>
-            </>
-          )}
-        </button>
 
+        {hasMore && (
+          <div className="text-center mt-4">
+            <button
+              onClick={handleLoadMore}
+              disabled={isLoadingMore}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label={isLoadingMore ? "Caricamento in corso..." : "Carica altri articoli"}
+            >
+              {isLoadingMore ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+                  <span>Caricamento...</span>
+                </>
+              ) : (
+                "Carica altri"
+              )}
+            </button>
+          </div>
+        )}
       </div>
     );
   };

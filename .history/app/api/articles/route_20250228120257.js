@@ -3,12 +3,13 @@ import axios from "axios";
 import NodeCache from "node-cache";
 
 // Create a cache instance with a TTL of 1 hour (3600 seconds)
-const cache = new NodeCache({ stdTTL: 3600 });
+const cache = new NodeCache({ 
+  stdTTL: 3600,
+  checkperiod: 120 // Check for expired keys every 2 minutes
+});
 
-export async function GET(request) {
-  // Get the search params from the request URL
-  const searchParams = request.nextUrl.searchParams;
-  const page = searchParams.get('page') || 1;
+export async function GET() {
+  const cacheKey = "articles"; // More descriptive cache key
   // const cachedData = cache.get(cacheKey);
 
   // if (cachedData) {
@@ -17,7 +18,7 @@ export async function GET(request) {
   // }
 
   // Fetch data from the API if not cached
-  const response = await axios.get(process.env.API_URL + "api/data?page=" + page);
+  const response = await axios.get(process.env.API_URL + "api/data");
   const data = response.data;
 
   // Store the fetched data in the cache

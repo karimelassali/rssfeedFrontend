@@ -9,6 +9,7 @@ export async function GET(request) {
   // Get the search params from the request URL
   const searchParams = request.nextUrl.searchParams;
   const page = searchParams.get('page') || 1;
+  const cacheKey = `apiData-page-${page}`;
   // const cachedData = cache.get(cacheKey);
 
   // if (cachedData) {
@@ -17,7 +18,7 @@ export async function GET(request) {
   // }
 
   // Fetch data from the API if not cached
-  const response = await axios.get(process.env.API_URL + "api/data?page=" + page);
+  const response = await axios.get(process.env.API_URL + "api/data?page=" + page + "&limit=10");
   const data = response.data;
 
   // Store the fetched data in the cache

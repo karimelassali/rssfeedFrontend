@@ -42,61 +42,6 @@ export default function DigiNews() {
     setData([]); // Clear existing data when filters or search changes
   }, [activeFilters, searchQuery]);
   
-
-  const fetchData = async () => {
-    setIsLoading(true);
-
-    try {
-      const response = await axios.get(`/api/articles?page=${loadMorePage}`, {
-        params: {
-          activeFilters: JSON.stringify(activeFilters),
-          search: searchQuery
-        },
-      });
-
-      // Log the full response for debugging
-      console.log("API Response:", response.data);
-      
-      // Store debug info
-      setDebugInfo({
-        responseData: response.data
-      });
-
-      // Check if response.data has the expected structure
-      if (!response.data || (!response.data.data && !Array.isArray(response.data))) {
-        console.error("Unexpected response structure:", response.data);
-        toast.error("Unexpected data format received", {
-          position: "bottom-right",
-          duration: 3000
-        });
-        return;
-      }
-
-      // Handle both Laravel pagination structure and direct array responses
-      const newData = Array.isArray(response.data) 
-        ? response.data 
-        : (response.data.data || []);
-      
-      // Filter sources that start with https://
-      const filteredData = newData.filter(item => 
-        item.source && typeof item.source === 'string' && item.source.startsWith('https://')
-      );
-
-      console.log("Filtered data length:", filteredData.length);
-      
-      console.log("Filtered data length:", filteredData.length);
-      setData(filteredData);
-    } catch (err) {
-      console.error("Error fetching data:", err);
-      setError("Failed to load news data: " + (err.message || "Unknown error"));
-      toast.error("Failed to load more data: " + (err.message || "Unknown error"), {
-        position: "bottom-right",
-        duration: 3000
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
   // Fetch data when filters or search changes
   useEffect(() => {
   
@@ -169,11 +114,6 @@ export default function DigiNews() {
     }
   };
 
-
-  const handleLoadMore = ()=>{
-    setLoadMorePage(loadMorePage + 1);
-    fetchData();
-  }
   // Render content based on loading, error, or data state
   const renderContent = () => {
     if (isLoading) {
@@ -298,22 +238,7 @@ export default function DigiNews() {
             
           </article>
         ))}
-        <button 
-          onClick={() => handleLoadMore()}
-          className="w-full mt-4 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium rounded-lg shadow-md hover:from-blue-600 hover:to-blue-700 transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="h-5 w-5 animate-spin" />
-              <span>Loading...</span>
-            </>
-          ) : (
-            <>
-              <ChevronDown className="h-5 w-5" />
-              <span>Load More Articles</span>
-            </>
-          )}
-        </button>
+
 
       </div>
     );

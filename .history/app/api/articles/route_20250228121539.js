@@ -9,6 +9,7 @@ export async function GET(request) {
   // Get the search params from the request URL
   const searchParams = request.nextUrl.searchParams;
   const page = searchParams.get('page') || 1;
+  const cacheKey = `apiData-page-${page}`;
   // const cachedData = cache.get(cacheKey);
 
   // if (cachedData) {
