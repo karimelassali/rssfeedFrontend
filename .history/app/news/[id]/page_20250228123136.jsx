@@ -8,4 +8,3 @@ export default function News({params}) {
     <NewsArticle id={id} />
   );
 }
-
