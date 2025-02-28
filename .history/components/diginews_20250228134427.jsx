@@ -351,7 +351,7 @@ export default function DigiNews() {
               </>
             ) : (
               <>
-              {filteredData.length}
+              {filte}
                 <ChevronDown className="h-5 w-5" />
                 <span>Load More Articles</span>
               </>
