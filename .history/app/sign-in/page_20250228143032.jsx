@@ -16,8 +16,7 @@ function Page() {
     setError('');
 
     try {
-      // In Next.js, environment variables need to be prefixed with NEXT_PUBLIC_ to be accessible on the client side
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}api/sign-in`, formData);
+      const response = await axios.post(`${process.env.GEMINI_API_KEY}/api/sign-in`, formData);
       if (response.data.token) {
         localStorage.setItem('authToken', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
