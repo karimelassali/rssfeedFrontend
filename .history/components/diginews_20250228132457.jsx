@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, Filter, XCircle, X, PenSquare, Loader2, ChevronDown, Star } from "lucide-react";
+import { Search, Filter, XCircle, X, PenSquare, Loader2, ChevronDown, ChevronUp, Star } from "lucide-react";
 import axios from "axios";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -14,17 +14,14 @@ const FilterModal = dynamic(() => import('./filter-modal').then(mod => ({ defaul
 export default function DigiNews() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState([]);
-  const [allData, setAllData] = useState([]); // All fetched data
-  const [filteredData, setFilteredData] = useState([]); // Data after search/filter
+  const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [authToken, setAuthToken] = useState(null);
   const [userEmail, setUserEmail] = useState(null);
   const [debugInfo, setDebugInfo] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  
+  const [loadMorePage , setLoadMorePage] = useState(1);  
   useEffect(() => {
     // Access localStorage only on client side
     const token = window.localStorage.getItem('authToken');
@@ -40,46 +37,20 @@ export default function DigiNews() {
     }
   }, []);
   
-  // Apply filters and search to the data
+  // Reset data when filters or search change
   useEffect(() => {
-    if (allData.length === 0) return;
-    
-    let results = [...allData];
-    
-    // Apply active filters if any
-    if (activeFilters.length > 0) {
-      // Implement your filter logic here based on activeFilters structure
-      // This is a placeholder - adjust according to your filter implementation
-      activeFilters.forEach(filter => {
-        if (filter.type && filter.value) {
-          results = results.filter(item => item[filter.type] === filter.value);
-        }
-      });
-    }
-    
-    // Apply search query if any
-    if (searchQuery.trim() !== "") {
-      const query = searchQuery.toLowerCase().trim();
-      results = results.filter(item => 
-        (item.title && item.title.toLowerCase().includes(query)) || 
-        (item.source && item.source.toLowerCase().includes(query))
-      );
-    }
-    
-    setFilteredData(results);
-  }, [allData, searchQuery, activeFilters]);
+    setData([]); // Clear existing data when filters or search changes
+  }, [activeFilters, searchQuery]);
+  
 
-  const fetchData = async (page = 1, isLoadMore = false) => {
-    if (isLoadMore) {
-      setIsLoadingMore(true);
-    } else {
-      setIsLoading(true);
-    }
+  const fetchData = async () => {
+    setIsLoading(true);
 
     try {
-      const response = await axios.get(`/api/articles?page=${page}`, {
+      const response = await axios.get(`/api/articles?page=${loadMorePage}`, {
         params: {
           activeFilters: JSON.stringify(activeFilters),
+          search: searchQuery
         },
       });
 
@@ -88,8 +59,7 @@ export default function DigiNews() {
       
       // Store debug info
       setDebugInfo({
-        responseData: response.data,
-        page
+        responseData: response.data
       });
 
       // Check if response.data has the expected structure
@@ -108,40 +78,33 @@ export default function DigiNews() {
         : (response.data.data || []);
       
       // Filter sources that start with https://
-      const filteredNewData = newData.filter(item => 
+      const filteredData = newData.filter(item => 
         item.source && typeof item.source === 'string' && item.source.startsWith('https://')
       );
 
-      if (isLoadMore) {
-        // Append new data to existing data
-        setAllData(prevData => [...prevData, ...filteredNewData]);
-      } else {
-        // Replace existing data
-        setAllData(filteredNewData);
-      }
+      console.log("Filtered data length:", filteredData.length);
       
-      console.log("Filtered data length:", filteredNewData.length);
+      console.log("Filtered data length:", filteredData.length);
+      setData(filteredData);
     } catch (err) {
       console.error("Error fetching data:", err);
       setError("Failed to load news data: " + (err.message || "Unknown error"));
-      toast.error(`Failed to ${isLoadMore ? "load more" : "load"} data: ${err.message || "Unknown error"}`, {
+      toast.error("Failed to load more data: " + (err.message || "Unknown error"), {
         position: "bottom-right",
         duration: 3000
       });
     } finally {
-      if (isLoadMore) {
-        setIsLoadingMore(false);
-      } else {
-        setIsLoading(false);
-      }
+      setIsLoading(false);
     }
   };
-
-  // Fetch initial data
+  // Fetch data when filters or search changes
   useEffect(() => {
-    setCurrentPage(1);
-    fetchData(1, false);
-  }, [activeFilters]); // Only refetch when filters change, not on search
+  
+
+    fetchData();
+  }, [searchQuery, activeFilters]);
+  
+
 
   // Clear search and filters
   const handleClearAll = () => {
@@ -152,13 +115,6 @@ export default function DigiNews() {
   // Clear search input
   const handleClearSearch = () => {
     setSearchQuery("");
-  };
-
-  // Handle load more
-  const handleLoadMore = () => {
-    const nextPage = currentPage + 1;
-    setCurrentPage(nextPage);
-    fetchData(nextPage, true);
   };
 
   // Calculate time difference for publication date
@@ -213,13 +169,18 @@ export default function DigiNews() {
     }
   };
 
+
+  const handleLoadMore = ()=>{
+    setLoadMorePage(loadMorePage + 1);
+    fetchData();
+  }
   // Render content based on loading, error, or data state
   const renderContent = () => {
     if (isLoading) {
       return <DigiNewsSkeleton />;
     }
 
-    if (error && filteredData.length === 0) {
+    if (error) {
       return (
         <div role="alert" className="flex flex-col items-center justify-center p-8 text-center">
           <XCircle className="h-12 w-12 text-red-500 mb-4" aria-hidden="true" />
@@ -228,7 +189,7 @@ export default function DigiNews() {
       );
     }
 
-    if (filteredData.length === 0 && (activeFilters.length > 0 || searchQuery)) {
+    if (data.length === 0 && (activeFilters.length > 0 || searchQuery)) {
       return (
         <div role="status" className="flex flex-col items-center justify-center p-8 text-center">
           <Toaster />
@@ -250,7 +211,7 @@ export default function DigiNews() {
     return (
       <div className="space-y-6">
         <div className="sr-only" role="status" aria-live="polite">
-          {filteredData.length} articoli trovati
+          {data.length} articoli trovati
         </div>
         
         {/* Show debugging info in dev environment */}
@@ -263,7 +224,7 @@ export default function DigiNews() {
           </div>
         )}
         
-        {filteredData.map((item, index) => (
+        {data.map((item, index) => (
           <article
             key={`${item.id || index}-${item.pubDate || 'no-date'}`}
             className="border-b border-gray-200 pb-6 last:border-0 relative"
@@ -337,26 +298,23 @@ export default function DigiNews() {
             
           </article>
         ))}
-        
-        {allData.length > 0 && (
-          <button 
-            onClick={handleLoadMore}
-            disabled={isLoadingMore}
-            className="w-full mt-4 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium rounded-lg shadow-md hover:from-blue-600 hover:to-blue-700 transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
-          >
-            {isLoadingMore ? (
-              <>
-                <Loader2 className="h-5 w-5 animate-spin" />
-                <span>Loading...</span>
-              </>
-            ) : (
-              <>
-                <ChevronDown className="h-5 w-5" />
-                <span>Load More Articles</span>
-              </>
-            )}
-          </button>
-        )}
+        <button 
+          onClick={() => handleLoadMore()}
+          className="w-full mt-4 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium rounded-lg shadow-md hover:from-blue-600 hover:to-blue-700 transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2"
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="h-5 w-5 animate-spin" />
+              <span>Loading...</span>
+            </>
+          ) : (
+            <>
+              <ChevronDown className="h-5 w-5" />
+              <span>Load More Articles</span>
+            </>
+          )}
+        </button>
+
       </div>
     );
   };
