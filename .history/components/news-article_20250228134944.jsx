@@ -212,8 +212,8 @@ export default function NewsArticle({id}) {
           />
         </div>
 
-        <div className="prose max-w-none mb-8">
-          <p className="mb-20">{articleData.description}</p>
+        <div className="prose max-w-none mb-10">
+          <p className="mb-4">{articleData.description}</p>
         </div>
 
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t">
@@ -316,7 +316,7 @@ export default function NewsArticle({id}) {
                   Vedi originale
                 </Button>
               </div>
-              <div className="w-full px-4 py-2 mb-20 text-black bg-transparent rounded-md whitespace-pre-wrap break-words">
+              <div className="w-full px-4 py-2 text-black bg-transparent rounded-md whitespace-pre-wrap break-words">
                 {aiResponse.description}
               </div>
             </div>

@@ -304,7 +304,7 @@ export default function PublishingWizard({ articleData, anulling, id }) {
                   </RadioGroup>
 
                   {formData.publishType === "schedule" && (
-                    <div className="space-y-2 ">
+                    <div className="space-y-2 mb-">
                       <p className="mb-2 text-sm">Seleziona data e ora di pubblicazione</p>
                       <div className="flex gap-2">
                         <div className="flex-1">
@@ -437,9 +437,9 @@ export default function PublishingWizard({ articleData, anulling, id }) {
                   />
                 )}
 
-                <div className="space-y-2 ">
+                <div className="space-y-2">
                   <h4 className="text-lg font-semibold">{articleData.title}</h4>
-                  <p className="text-sm pb-20 text-gray-600">{articleData.description}</p>
+                  <p className="text-sm mb-20 text-gray-600">{articleData.description}</p>
                 </div>
 
                 {formData.publishType === "schedule" && (

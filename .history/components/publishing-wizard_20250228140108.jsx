@@ -437,9 +437,9 @@ export default function PublishingWizard({ articleData, anulling, id }) {
                   />
                 )}
 
-                <div className="space-y-2 ">
+                <div className="space-y-2 mb-20">
                   <h4 className="text-lg font-semibold">{articleData.title}</h4>
-                  <p className="text-sm pb-20 text-gray-600">{articleData.description}</p>
+                  <p className="text-sm mb-20 text-gray-600">{articleData.description}</p>
                 </div>
 
                 {formData.publishType === "schedule" && (

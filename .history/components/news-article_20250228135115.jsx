@@ -316,7 +316,7 @@ export default function NewsArticle({id}) {
                   Vedi originale
                 </Button>
               </div>
-              <div className="w-full px-4 py-2 mb-20 text-black bg-transparent rounded-md whitespace-pre-wrap break-words">
+              <div className="w-full px-4 py-2 text-black bg-transparent rounded-md whitespace-pre-wrap break-words">
                 {aiResponse.description}
               </div>
             </div>
