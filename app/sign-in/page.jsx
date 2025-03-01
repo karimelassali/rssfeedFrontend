@@ -3,12 +3,16 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { Loader2 } from 'lucide-react';
+import Cookies from 'js-cookie';
+
 
 function Page() {
   const router = useRouter();
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,8 +23,8 @@ function Page() {
       // In Next.js, environment variables need to be prefixed with NEXT_PUBLIC_ to be accessible on the client side
       const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}api/sign-in`, formData);
       if (response.data.token) {
-        localStorage.setItem('authToken', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
+        Cookies.set('authToken', response.data.token);
+        Cookies.set('user', JSON.stringify(response.data.user));
         router.push('/');
       } else {
         setError('Invalid credentials. Please try again.');

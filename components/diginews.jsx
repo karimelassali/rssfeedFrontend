@@ -5,6 +5,8 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { Toaster, toast } from "sonner";
 import DigiNewsSkeleton from "./ui/skeletons/diginews";
+import Cookies from "js-cookie";
+
 
 // Lazy load the FilterModal component
 const FilterModal = dynamic(() => import('./filter-modal').then(mod => ({ default: mod.FilterModal })), {
@@ -27,8 +29,8 @@ export default function DigiNews() {
   
   useEffect(() => {
     // Access localStorage only on client side
-    const token = window.localStorage.getItem('authToken');
-    const userStr = window.localStorage.getItem('user');
+    const token = Cookies.get('authToken');
+    const userStr = Cookies.get('user');
     setAuthToken(token);
     if (userStr) {
       try {
@@ -404,14 +406,28 @@ export default function DigiNews() {
                 <span className="text-sm text-blue-600">
                   {userEmail}
                 </span>
+                <Link
+                href="/settings"
+                className="flex items-center justify-center bg-blue-500 border border-blue-500 p-2 rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium text-white"
+              >
+                Settings
+              </Link>
               </div>
             ) : (
-              <Link 
-                href="/sign-in" 
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium"
+              <>
+                <Link
+                href="/sign-in"
+                className="flex items-center justify-center border border-blue-500 px-4 py-2 rounded-lg hover:bg-blue-500 hover:text-white transition-colors text-sm font-medium"
               >
-                Login
+                Accedi
               </Link>
+              <Link
+                href="/settings"
+                className="flex items-center justify-center bg-blue-500 border border-blue-500 px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium text-white"
+              >
+                Settings
+              </Link>
+              </>
             )}
           </div>
         </div>
