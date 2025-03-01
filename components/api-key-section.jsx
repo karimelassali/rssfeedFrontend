@@ -9,8 +9,8 @@ import { Label } from "@/components/ui/label"
 import { Eye, EyeOff, Save } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
-export default function ApiKeySection() {
-  const [apiKey, setApiKey] = useState("")
+export default function ApiKeySection({currentApiKey}) {
+  const [apiKey, setApiKey] = useState(currentApiKey || "No api key")
   const [showKey, setShowKey] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
 

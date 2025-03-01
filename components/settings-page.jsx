@@ -30,7 +30,7 @@ export default function SettingsPage() {
             <span className="hidden sm:inline">Profile</span>
           </TabsTrigger>
           <TabsTrigger value="api" className="flex items-center gap-2">
-            <Key size={16} />
+            <Key  size={16} />
             <span className="hidden sm:inline">API Keys</span>
           </TabsTrigger>
           <TabsTrigger value="favorites" className="flex items-center gap-2">
@@ -54,7 +54,7 @@ export default function SettingsPage() {
           </TabsContent>
 
           <TabsContent value="api" className="mt-0">
-            <ApiKeySection />
+            <ApiKeySection  currentApiKey={'iuwhferhfeiruenuuh'}/>
           </TabsContent>
 
           <TabsContent value="favorites" className="mt-0">

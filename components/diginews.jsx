@@ -39,6 +39,8 @@ export default function DigiNews() {
       } catch (e) {
         console.error('Error parsing user data:', e);
       }
+    }else{
+      window.location.href = '/sign-in';
     }
   }, []);
   
