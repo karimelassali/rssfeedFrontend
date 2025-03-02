@@ -1,31 +1,77 @@
 import { ArrowLeft, X } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 
-const NEWS_SOURCES = [
-  { id: "ansa", name: "Ansa Valle d'Aosta" },
-  { id: "stampa", name: "La Stampa" },
-  { id: "aostasera", name: "Aostasera" },
-  { id: "gazzetta", name: "Gazzetta Matin" },
-  { id: "cronaca", name: "Aosta Cronaca" },
-  { id: "news24", name: "AostaNews 24" },
-];
-
 export function FilterModal({
   isOpen,
   onClose,
-  onApply = () => {}, // Default to a no-op function if not provided
+  onApply = () => {}, 
   initialFilters = [],
+  currentData = [] // Current data from DigiNews
 }) {
-  const [selectedSources, setSelectedSources] = useState(initialFilters);
+  const [selectedSources, setSelectedSources] = useState([]);
+  const [availableSources, setAvailableSources] = useState([]);
   const prevIsOpenRef = useRef(isOpen);
 
-  // Reset selectedSources when the modal is opened
+  // For debugging - log data when the modal opens
   useEffect(() => {
-    if (!prevIsOpenRef.current && isOpen) {
-      setSelectedSources(initialFilters);
+    if (isOpen) {
+      console.log("FilterModal - Current Data:", currentData);
+      console.log("FilterModal - Initial Filters:", initialFilters);
     }
-    prevIsOpenRef.current = isOpen;
-  }, [isOpen, initialFilters]);
+  }, [isOpen, currentData, initialFilters]);
+
+  // Process current data to extract unique sources when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      // Reset selected sources to initial filters
+      setSelectedSources(initialFilters);
+      
+      // Ensure we have data and log it
+      if (currentData && currentData.length > 0) {
+        console.log("Processing data for sources, items:", currentData.length);
+        
+        // Extract all sources first for debugging
+        const allSources = currentData.map(item => item.source);
+        console.log("All sources:", allSources);
+        
+        // Extract unique sources from current data - handle all possible formats
+        const uniqueSources = [...new Set(
+          currentData
+            .filter(item => item.source && typeof item.source === 'string')
+            .map(item => item.source)
+        )];
+        
+        console.log("Unique sources found:", uniqueSources);
+        
+        // Transform sources into the format we need
+        const formattedSources = uniqueSources.map(source => {
+          // Extract domain from URL if it looks like a URL
+          let domain = source;
+          if (source.includes('://')) {
+            try {
+              const url = new URL(source);
+              domain = url.hostname.replace('www.', '');
+            } catch (e) {
+              console.error("Error parsing URL:", source, e);
+              // Keep original if URL parsing fails
+            }
+          }
+          
+          return {
+            id: source,
+            name: domain || source, // Fallback to original source if domain extraction fails
+            originalUrl: source
+          };
+        });
+        
+        console.log("Formatted sources:", formattedSources);
+        setAvailableSources(formattedSources);
+      } else {
+        console.warn("No data available for filtering");
+        setAvailableSources([]);
+      }
+    }
+  }, [isOpen, initialFilters, currentData]);
 
   if (!isOpen) return null;
 
@@ -38,7 +84,14 @@ export function FilterModal({
   };
 
   const handleApply = () => {
-    onApply(selectedSources);
+    // Transform the selected source IDs into filter objects
+    const filters = selectedSources.map(sourceId => ({
+      type: 'source',
+      value: sourceId
+    }));
+    
+    console.log("Applying filters:", filters);
+    onApply(filters);
     onClose();
   };
 
@@ -75,30 +128,49 @@ export function FilterModal({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 mb-20">
-        {NEWS_SOURCES.map((source) => (
-          <button
-            key={source.id}
-            onClick={() => handleSourceToggle(source.id)}
-            type="button"
-            className={`p-3 rounded-full text-sm font-medium text-left flex items-center gap-2 ${
-              selectedSources.includes(source.id)
-                ? "bg-[#1a3b54] text-white"
-                : "bg-gray-100 text-gray-900"
-            }`}
-          >
-            <div
-              className={`w-6 h-6 flex items-center justify-center rounded ${
+      {/* Debug info section - can be removed in production */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="bg-gray-100 p-2 mb-4 rounded text-xs">
+          <details>
+            <summary>Debug Info</summary>
+            <div>Current Data Count: {currentData?.length || 0}</div>
+            <div>Available Sources: {availableSources?.length || 0}</div>
+            <div>Selected Sources: {selectedSources?.length || 0}</div>
+          </details>
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-3 mb-20 max-h-[calc(100vh-180px)] overflow-y-auto">
+        {availableSources.length === 0 ? (
+          <div className="col-span-2 text-center py-8 text-gray-500">
+            Nessuna fonte disponibile
+            <p className="text-xs mt-2">Assicurati che ci siano dati caricati.</p>
+          </div>
+        ) : (
+          availableSources.map((source) => (
+            <button
+              key={source.id}
+              onClick={() => handleSourceToggle(source.id)}
+              type="button"
+              className={`p-3 rounded-full text-sm font-medium text-left flex items-center gap-2 ${
                 selectedSources.includes(source.id)
-                  ? "bg-green-500"
-                  : "bg-gray-400"
+                  ? "bg-[#1a3b54] text-white"
+                  : "bg-gray-100 text-gray-900"
               }`}
             >
-              {source.name.charAt(0)}
-            </div>
-            {source.name}
-          </button>
-        ))}
+              <div
+                className={`w-6 h-6 flex items-center justify-center rounded ${
+                  selectedSources.includes(source.id)
+                    ? "bg-green-500"
+                    : "bg-gray-400"
+                }`}
+              >
+                {source.name.charAt(0).toUpperCase()}
+              </div>
+              <span className="truncate">{source.name}</span>
+            </button>
+          ))
+        )}
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 p-4 flex gap-3 bg-white border-t">

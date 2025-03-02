@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Trash2, ExternalLink } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
-export default function FavoritesSection() {
+export default function FavoritesSection({userId}) {
   const [favorites, setFavorites] = useState([
     { id: 1, title: "TechCrunch", url: "https://techcrunch.com", category: "Technology" },
     { id: 2, title: "The New York Times", url: "https://nytimes.com", category: "News" },

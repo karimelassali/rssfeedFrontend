@@ -7,7 +7,7 @@ export async function POST(request, { params }) {
     console.log(title, descreption,image,category,showInHomePage, publishType,date,time,scheduledTime);
     try {
       const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}api/article/publish/${id}`,{
-        title, description:image,category,showInHomePage, publishType,date,time,scheduledTime
+        title, description:descreption,image,category,showInHomePage, publishType,date,time,scheduledTime
       });
       const data = response.data;
       return NextResponse.json(data);

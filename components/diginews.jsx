@@ -23,6 +23,7 @@ export default function DigiNews() {
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [authToken, setAuthToken] = useState(null);
+  const [userData, setUserData] = useState(null);
   const [userEmail, setUserEmail] = useState(null);
   const [debugInfo, setDebugInfo] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -34,8 +35,9 @@ export default function DigiNews() {
     setAuthToken(token);
     if (userStr) {
       try {
-        const userData = JSON.parse(userStr);
-        setUserEmail(userData.email);
+        const info = JSON.parse(userStr);
+        setUserEmail(info.email);
+        setUserData(info);
       } catch (e) {
         console.error('Error parsing user data:', e);
       }
@@ -48,15 +50,20 @@ export default function DigiNews() {
   useEffect(() => {
     if (allData.length === 0) return;
     
+    console.log("Applying filters to data:", allData.length, "items with", activeFilters.length, "filters");
+    
     let results = [...allData];
     
     // Apply active filters if any
     if (activeFilters.length > 0) {
-      // Implement your filter logic here based on activeFilters structure
-      // This is a placeholder - adjust according to your filter implementation
       activeFilters.forEach(filter => {
-        if (filter.type && filter.value) {
-          results = results.filter(item => item[filter.type] === filter.value);
+        // Check if filter is an object with type and value
+        if (typeof filter === 'object' && filter.type === 'source' && filter.value) {
+          results = results.filter(item => item.source === filter.value);
+        } 
+        // If filter is just a string (backward compatibility)
+        else if (typeof filter === 'string') {
+          results = results.filter(item => item.source === filter);
         }
       });
     }
@@ -70,6 +77,7 @@ export default function DigiNews() {
       );
     }
     
+    console.log("Filtered results:", results.length, "items");
     setFilteredData(results);
   }, [allData, searchQuery, activeFilters]);
 
@@ -301,29 +309,34 @@ export default function DigiNews() {
                     <PenSquare className="h-4 w-4 text-white" aria-hidden="true" />
                   </Link>
                   <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      try {
-                        // Extract domain from source URL
-                        const domain = new URL(item.source).hostname.replace('www.', '');
-                        toast.success(`${domain} :  added to your favorite sources!`, {
-                          position: "bottom-right",
-                          duration: 3000,
-                          style: {
-                            background: "#4CAF50",
-                            color: "white",
-                            border: "none"
-                          }
-                        });
-                      } catch (err) {
-                        console.error("Error processing source URL:", err);
-                        toast.error("Invalid source URL", {
-                          position: "bottom-right",
-                          duration: 3000
-                        });
-                      }
-                    }}
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    try {
+                      const req = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}api/favorite_sources/store/`, {
+                        source: item.source,
+                        user_id: userData.id
+                      });
+                  
+                      // Extract domain from source URL
+                      const domain = new URL(item.source).hostname.replace('www.', '');
+                      toast.success(`${req.data.message}`, {
+                        position: "bottom-right",
+                        duration: 3000,
+                        style: {
+                          background: "#4CAF50",
+                          color: "white",
+                          border: "none"
+                        }
+                      });
+                    } catch (err) {
+                      console.error("Error processing source URL:", err);
+                      toast.error("Invalid source URL", {
+                        position: "bottom-right",
+                        duration: 3000
+                      });
+                    }
+                  }}
                     className="bg-yellow-400 hover:bg-yellow-500 p-1.5 rounded-lg transition-colors cursor-pointer"
                     aria-label="Subscribe to notifications from this source"
                   >
@@ -346,7 +359,7 @@ export default function DigiNews() {
           <button 
             onClick={handleLoadMore}
             disabled={isLoadingMore}
-            className="w-full mt-4 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium rounded-lg shadow-md hover:from-blue-600 hover:to-blue-700 transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
+            className="w-full mt-4 px-6 py-3 bg-green-400 hover:bg-green-500 text-white font-medium rounded-lg shadow-md hover:from-blue-600 hover:to-blue-700 transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
           >
             {isLoadingMore ? (
               <>
@@ -443,8 +456,12 @@ export default function DigiNews() {
         <FilterModal
           isOpen={isFilterOpen}
           onClose={() => setIsFilterOpen(false)}
-          initialFilters={activeFilters}
-          onApply={(filters) => setActiveFilters(filters)}
+          initialFilters={activeFilters.map(f => f.value)} // Change this if your filter structure is different
+          onApply={(filters) => {
+            console.log("Received filters from modal:", filters);
+            setActiveFilters(filters);
+          }}
+          currentData={allData} // Make sure this is your full dataset
         />
       )}
     </main>

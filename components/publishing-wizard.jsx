@@ -55,7 +55,8 @@ export default function PublishingWizard({ articleData, anulling, id }) {
     id: id,
     title: articleData.title,
     description: articleData.description,
-    pubDate: articleData.pubDate
+    pubDate: articleData.pubDate,
+    image: articleData.image,
   })
 
   // Handle countdown and redirect
@@ -66,7 +67,7 @@ export default function PublishingWizard({ articleData, anulling, id }) {
         setRedirectCountdown((prev) => prev - 1)
       }, 1000)
     } else if (isRedirecting && redirectCountdown === 0) {
-      router.push('/')
+      // router.push('/')
     }
     return () => clearInterval(timer)
   }, [isRedirecting, redirectCountdown, router])
