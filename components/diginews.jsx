@@ -212,53 +212,86 @@ export default function DigiNews() {
   const getTimeDifference = (pubDate) => {
     const now = new Date();
     const published = new Date(pubDate);
-    const diff = (now.getTime() - published.getTime()) / 1000;
-    const minutes = Math.floor(diff / 60);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-    const weeks = Math.floor(days / 7);
-    const months = Math.floor(days / 30.44); // Average month length
+    const diffSeconds = (now.getTime() - published.getTime()) / 1000;
 
     // Helper function to pad numbers with leading zeros
     const padZero = (num) => String(num).padStart(2, '0');
 
-    // Get date and time components
+    // Get date and time components for published date
     const day = padZero(published.getDate());
     const month = padZero(published.getMonth() + 1);
     const year = published.getFullYear();
     const hours24 = padZero(published.getHours());
     const minutesTime = padZero(published.getMinutes());
-    const seconds = padZero(published.getSeconds());
+    const secondsTime = padZero(published.getSeconds());
+    const dateTimeString = `${day}/${month}/${year} alle ${hours24}:${minutesTime}:${secondsTime}`;
 
-    // Full date-time format
-    const dateTimeString = `${day}/${month}/${year} alle ${hours24}:${minutesTime}:${seconds}`;
+    // Determine if published date is today
+    const isToday = now.getFullYear() === published.getFullYear() &&
+        now.getMonth() === published.getMonth() &&
+        now.getDate() === published.getDate();
 
-    // Handle different time ranges with more precision
-    if (diff < 60) { // Less than a minute
-        return `${Math.floor(diff)} secondi fa (oggi alle ${hours24}:${minutesTime})`;
-    } else if (days === 0) { // Same day
+    // Determine if published date is yesterday
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    const isYesterday = published.getFullYear() === yesterday.getFullYear() &&
+        published.getMonth() === yesterday.getMonth() &&
+        published.getDate() === yesterday.getDate();
+
+    // Calculate the difference in full calendar days
+    const publishedMidnight = new Date(published.getFullYear(), published.getMonth(), published.getDate());
+    const nowMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const diffDays = Math.floor((nowMidnight - publishedMidnight) / (1000 * 60 * 60 * 24));
+
+    // Calculate the number of full calendar months
+    const getCalendarMonths = () => {
+        let months = (now.getFullYear() - published.getFullYear()) * 12;
+        months += now.getMonth() - published.getMonth();
+        if (now.getDate() < published.getDate()) {
+            months--;
+        }
+        return months;
+    };
+    const months = getCalendarMonths();
+
+    // Calculate the number of full calendar years
+    const getCalendarYears = () => {
+        let years = now.getFullYear() - published.getFullYear();
+        if (now.getMonth() < published.getMonth() ||
+            (now.getMonth() === published.getMonth() && now.getDate() < published.getDate())) {
+            years--;
+        }
+        return years;
+    };
+    const years = getCalendarYears();
+
+    if (diffSeconds < 60) {
+        return `${Math.floor(diffSeconds)} secondi fa (oggi alle ${hours24}:${minutesTime})`;
+    } else if (isToday) {
+        const totalMinutes = Math.floor(diffSeconds / 60);
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
         if (hours > 0) {
-            const remainingMinutes = minutes % 60;
-            if (remainingMinutes > 0) {
-                return `${hours} ${hours === 1 ? "ora" : "ore"} e ${remainingMinutes} ${remainingMinutes === 1 ? "minuto" : "minuti"} fa (oggi alle ${hours24}:${minutesTime})`;
+            if (minutes > 0) {
+                return `${hours} ${hours === 1 ? "ora" : "ore"} e ${minutes} ${minutes === 1 ? "minuto" : "minuti"} fa (oggi alle ${hours24}:${minutesTime})`;
             }
             return `${hours} ${hours === 1 ? "ora" : "ore"} fa (oggi alle ${hours24}:${minutesTime})`;
         } else {
-            return `${minutes} ${minutes === 1 ? "minuto" : "minuti"} fa (oggi alle ${hours24}:${minutesTime})`;
+            return `${totalMinutes} ${totalMinutes === 1 ? "minuto" : "minuti"} fa (oggi alle ${hours24}:${minutesTime})`;
         }
-    } else if (days === 1) { // Yesterday
+    } else if (isYesterday) {
         return `ieri alle ${hours24}:${minutesTime}`;
-    } else if (days < 7) { // Less than a week
-        return `${days} ${days === 1 ? "giorno" : "giorni"} fa (${dateTimeString})`;
-    } else if (weeks < 4) { // Less than a month
+    } else if (diffDays < 7) {
+        return `${diffDays} ${diffDays === 1 ? "giorno" : "giorni"} fa (${dateTimeString})`;
+    } else if (months < 1) {
+        const weeks = Math.floor(diffDays / 7);
         return `${weeks} ${weeks === 1 ? "settimana" : "settimane"} fa (${dateTimeString})`;
-    } else if (months < 12) { // Less than a year
+    } else if (years < 1) {
         return `${months} ${months === 1 ? "mese" : "mesi"} fa (${dateTimeString})`;
-    } else { // More than a year
-        const years = Math.floor(months / 12);
+    } else {
         return `${years} ${years === 1 ? "anno" : "anni"} fa (${dateTimeString})`;
     }
-  };
+};
 
   // Custom source icon component
   const SourceIcon = ({ source }) => {
