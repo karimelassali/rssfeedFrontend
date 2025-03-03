@@ -212,7 +212,11 @@ export default function DigiNews() {
   const getTimeDifference = (pubDate) => {
     const now = new Date();
     const published = new Date(pubDate);
-    const diffSeconds = (now.getTime() - published.getTime()) / 1000;
+
+    // Handle future dates by taking absolute value
+    const diffSeconds = Math.abs((now.getTime() - published.getTime()) / 1000);
+    const isFuture = published > now;
+    const prefix = isFuture ? "Tra " : "";
 
     // Helper function to pad numbers with leading zeros
     const padZero = (num) => String(num).padStart(2, '0');
@@ -223,8 +227,7 @@ export default function DigiNews() {
     const year = published.getFullYear();
     const hours24 = padZero(published.getHours());
     const minutesTime = padZero(published.getMinutes());
-    const secondsTime = padZero(published.getSeconds());
-    const dateTimeString = `${day}/${month}/${year} alle ${hours24}:${minutesTime}:${secondsTime}`;
+    const dateTimeString = `${day}/${month}/${year} alle ${hours24}:${minutesTime}`;
 
     // Determine if published date is today
     const isToday = now.getFullYear() === published.getFullYear() &&
@@ -265,34 +268,34 @@ export default function DigiNews() {
     };
     const years = getCalendarYears();
 
+    // Handle time differences
     if (diffSeconds < 60) {
-        return `${Math.floor(diffSeconds)} secondi fa (oggi alle ${hours24}:${minutesTime})`;
+        return `${prefix}${Math.floor(diffSeconds)} ${Math.floor(diffSeconds) === 1 ? "secondo" : "secondi"}${isFuture ? "" : " fa"} (${isToday ? `oggi alle ${hours24}:${minutesTime}` : dateTimeString})`;
     } else if (isToday) {
         const totalMinutes = Math.floor(diffSeconds / 60);
         const hours = Math.floor(totalMinutes / 60);
         const minutes = totalMinutes % 60;
         if (hours > 0) {
             if (minutes > 0) {
-                return `${hours} ${hours === 1 ? "ora" : "ore"} e ${minutes} ${minutes === 1 ? "minuto" : "minuti"} fa (oggi alle ${hours24}:${minutesTime})`;
+                return `${prefix}${hours} ${hours === 1 ? "ora" : "ore"} e ${minutes} ${minutes === 1 ? "minuto" : "minuti"}${isFuture ? "" : " fa"} (oggi alle ${hours24}:${minutesTime})`;
             }
-            return `${hours} ${hours === 1 ? "ora" : "ore"} fa (oggi alle ${hours24}:${minutesTime})`;
+            return `${prefix}${hours} ${hours === 1 ? "ora" : "ore"}${isFuture ? "" : " fa"} (oggi alle ${hours24}:${minutesTime})`;
         } else {
-            return `${totalMinutes} ${totalMinutes === 1 ? "minuto" : "minuti"} fa (oggi alle ${hours24}:${minutesTime})`;
+            return `${prefix}${totalMinutes} ${totalMinutes === 1 ? "minuto" : "minuti"}${isFuture ? "" : " fa"} (oggi alle ${hours24}:${minutesTime})`;
         }
     } else if (isYesterday) {
-        return `ieri alle ${hours24}:${minutesTime}`;
+        return `${prefix}ieri alle ${hours24}:${minutesTime}`;
     } else if (diffDays < 7) {
-        return `${diffDays} ${diffDays === 1 ? "giorno" : "giorni"} fa (${dateTimeString})`;
+        return `${prefix}${diffDays} ${diffDays === 1 ? "giorno" : "giorni"}${isFuture ? "" : " fa"} (${dateTimeString})`;
     } else if (months < 1) {
         const weeks = Math.floor(diffDays / 7);
-        return `${weeks} ${weeks === 1 ? "settimana" : "settimane"} fa (${dateTimeString})`;
+        return `${prefix}${weeks} ${weeks === 1 ? "settimana" : "settimane"}${isFuture ? "" : " fa"} (${dateTimeString})`;
     } else if (years < 1) {
-        return `${months} ${months === 1 ? "mese" : "mesi"} fa (${dateTimeString})`;
+        return `${prefix}${months} ${months === 1 ? "mese" : "mesi"}${isFuture ? "" : " fa"} (${dateTimeString})`;
     } else {
-        return `${years} ${years === 1 ? "anno" : "anni"} fa (${dateTimeString})`;
+        return `${prefix}${years} ${years === 1 ? "anno" : "anni"}${isFuture ? "" : " fa"} (${dateTimeString})`;
     }
 };
-
   // Custom source icon component
   const SourceIcon = ({ source }) => {
     const domain = getDomainFromUrl(source);
