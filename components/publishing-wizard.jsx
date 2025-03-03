@@ -456,10 +456,9 @@ export default function PublishingWizard({ articleData, anulling, id }) {
                     Reindirizzamento alla pagina principale in {redirectCountdown} secondi...
                   </div>
                 )}
-                
+                <div className="flex w-full justify-center">
                 <div
-                  className="fixed bottom-0 left-0 right-0 backdrop-blur-sm flex gap-2 p-2"
-                  style={{boxShadow: "0 0 10px rgba(0,0,0,0.2)"}}
+                  className="fixed bottom-0 left-50 right-50 backdrop-blur-sm flex w-[50%] justify-center items-center  gap-2 p-2 max-sm:w-full "  
                 >
                   <Button
                     variant="outline"
@@ -484,6 +483,8 @@ export default function PublishingWizard({ articleData, anulling, id }) {
                     {getPublishButtonContent()}
                   </Button>
                 </div>
+                </div>
+                
               </div>
             </Card>
           </motion.div>

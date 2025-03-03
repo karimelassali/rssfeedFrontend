@@ -216,10 +216,10 @@ export default function NewsArticle({id}) {
           <p className="mb-20">{articleData.description}</p>
         </div>
 
-        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t">
+        <div className="fixed flex justify-center bottom-0 left-0 right-0 p-4 bg-white border-t">
           <Button
             onClick={toggleEdit}
-            className="w-full bg-green-500 hover:bg-green-600 text-white py-4 rounded-full flex items-center justify-center gap-2"
+            className="w-[50%]  bg-green-500 hover:bg-green-600 text-white py-4 rounded-full flex items-center justify-center gap-2 max-sm:w-full"
           >
             <Edit2 className="w-4 h-4" />
             Utilizza e rielabora
@@ -340,7 +340,8 @@ export default function NewsArticle({id}) {
 
     if (showRegenerateButton) {
       return (
-        <div className="flex gap-4">
+        <div className="flex w-full justify-center gap-4">
+          <div className="flex w-[50%] flex justify-center   gap-4 max-sm:w-full">
           <Button 
             onClick={() => setShowEditForm(true)}
             className="flex-1 rounded-full py-6 bg-slate-800 hover:bg-slate-700 text-white"
@@ -353,6 +354,7 @@ export default function NewsArticle({id}) {
           >
             Continua
           </Button>
+        </div>
         </div>
       )
     }

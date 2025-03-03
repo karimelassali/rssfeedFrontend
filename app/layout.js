@@ -11,7 +11,7 @@ const inter = Inter({
 });
 
 export const metadata = {
-  metadataBase: new URL('https://diginews.com'),
+  metadataBase: new URL('https://rssfeed-frontend.vercel.app/'),
   title: {
     default: "DigiNews - Your Trusted Digital News Source",
     template: "%s | DigiNews"
@@ -36,7 +36,7 @@ export const metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://diginews.com',
+    url: 'https://rssfeed-frontend.vercel.app/og-image.jpg',
     siteName: 'DigiNews',
     title: 'DigiNews - Your Trusted Digital News Source',
     description: 'Your trusted source for digital news and updates, delivering real-time coverage of the latest stories and events',
@@ -60,7 +60,7 @@ export const metadata = {
     google: 'google-site-verification-code',
     yandex: 'yandex-verification-code',
     other: {
-      me: ['https://diginews.com']
+      me: ['https://rssfeed-frontend.vercel.app/og-image.jpg']
     }
   }
 };

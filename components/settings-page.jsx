@@ -8,7 +8,7 @@ import ApiKeySection from "@/components/api-key-section"
 import FavoritesSection from "@/components/favorites-section"
 import StatsSection from "@/components/stats-section"
 import { User, LinkIcon, Key, BarChart } from "lucide-react"
-import {Cookie} from "js-cookie"
+import Cookies from "js-cookie"
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("profile")
@@ -16,7 +16,7 @@ export default function SettingsPage() {
 
 
   useEffect(() => {
-    const info = Cookie.get("user");
+    const info = Cookies.get("user");
     if (info) {
       setUser(JSON.parse(info));
     }
