@@ -5,7 +5,7 @@ export async function POST(req) {
     const body = await req.json();
     const { articleTitle, articleDescription } = body;
 
-    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+    const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
 
     if (!GEMINI_API_KEY) {
       return NextResponse.json(

@@ -1,19 +1,27 @@
-"use client"
+"use client";
 
-import { useState ,useEffect} from "react"
-import { motion } from "framer-motion"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import ProfileSection from "@/components/profile-section"
-import ApiKeySection from "@/components/api-key-section"
-import FavoritesSection from "@/components/favorites-section"
-import StatsSection from "@/components/stats-section"
-import { User, LinkIcon, Key, BarChart } from "lucide-react"
-import Cookies from "js-cookie"
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ProfileSection from "@/components/profile-section";
+import ApiKeySection from "@/components/api-key-section";
+import FavoritesSection from "@/components/favorites-section";
+import StatsSection from "@/components/stats-section";
+import { User, LinkIcon, Key, BarChart, ArrowBigLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
+import axios from "axios";
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState("profile")
+  const [activeTab, setActiveTab] = useState("profile");
   const [user, setUser] = useState(null);
+  const [userData, setUserData] = useState({
+    apiToken: process.env.NEXT_PUBLIC_GEMINI_API_KEY,
+    favoriteSources: null, // Initialize as null to handle loading state
+  });
+  const [isLoading, setIsLoading] = useState(true);
 
+  const router = useRouter();
 
   useEffect(() => {
     const info = Cookies.get("user");
@@ -22,25 +30,74 @@ export default function SettingsPage() {
     }
   }, []);
 
+  const fetchFavorites = async () => {
+    if (!user?.id) return;
+    
+    try {
+      setIsLoading(true);
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}api/favorite_sources/fetch`,
+        {
+          user_id: user.id,
+        }
+      );
+      
+      // Pass the complete response data - it includes both message and sources
+      setUserData((prev) => ({
+        ...prev,
+        favoriteSources: response.data,
+      }));
+    } catch (error) {
+      console.error("Error fetching favorites:", error);
+      // Set empty data structure with message on error
+      setUserData((prev) => ({
+        ...prev,
+        favoriteSources: {
+          message: "Error loading favorites. Please try again.",
+          sources: []
+        },
+      }));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchFavorites();
+    }
+  }, [user]);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold text-[#0F2A43] mb-6">Settings</h1>
+      className="max-w-4xl mx-auto"
+    >
+      <div className="flex items-center mb-6">
+        <button
+          onClick={() => router.push("/")}
+          className="flex items-center gap-2 text-green-400 hover:text-green-600 transition duration-200"
+        >
+          <ArrowBigLeft size={50} />
+          <span className="text-3xl text-gray-500 font-bold">Settings</span>
+        </button>
+      </div>
+      
       <Tabs
         defaultValue="profile"
         value={activeTab}
         onValueChange={setActiveTab}
-        className="w-full">
+        className="w-full"
+      >
         <TabsList className="grid grid-cols-4 mb-8">
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <User size={16} />
             <span className="hidden sm:inline">Profile</span>
           </TabsTrigger>
           <TabsTrigger value="api" className="flex items-center gap-2">
-            <Key  size={16} />
+            <Key size={16} />
             <span className="hidden sm:inline">API Keys</span>
           </TabsTrigger>
           <TabsTrigger value="favorites" className="flex items-center gap-2">
@@ -58,17 +115,28 @@ export default function SettingsPage() {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.3 }}
-          className="w-full">
+          className="w-full"
+        >
           <TabsContent value="profile" className="mt-0">
             <ProfileSection />
           </TabsContent>
 
           <TabsContent value="api" className="mt-0">
-            <ApiKeySection  currentApiKey={'iuwhferhfeiruenuuh'}/>
+            <ApiKeySection currentApiKey={userData.apiToken} />
           </TabsContent>
 
           <TabsContent value="favorites" className="mt-0">
-            <FavoritesSection />
+            {isLoading ? (
+              <div className="p-12 text-center">
+                <div className="animate-pulse flex flex-col items-center">
+                  <div className="h-8 w-8 bg-green-200 rounded-full mb-4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-48 mb-2.5"></div>
+                  <div className="h-4 bg-gray-200 rounded w-64"></div>
+                </div>
+              </div>
+            ) : (
+              <FavoritesSection favoriteSources={userData.favoriteSources} />
+            )}
           </TabsContent>
 
           <TabsContent value="stats" className="mt-0">
@@ -79,4 +147,3 @@ export default function SettingsPage() {
     </motion.div>
   );
 }
-

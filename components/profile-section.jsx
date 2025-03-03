@@ -46,7 +46,7 @@ export default function ProfileSection() {
         <div className="flex flex-col items-center sm:flex-row sm:items-start gap-6">
           <div className="relative">
             <Avatar className="w-24 h-24 border-4 border-[#22C55E]">
-              <AvatarImage src="https://imgs.search.brave.com/jFGkberUMW5FO07MvFDP96UFs2aRoWiNWGWZpzmKFu8/rs:fit:500:0:0:0/g:ce/aHR0cHM6Ly90NC5m/dGNkbi5uZXQvanBn/LzA0LzY1LzI1LzM3/LzM2MF9GXzQ2NTI1/Mzc2M19sNFVGMnZw/UFF2YXlSQXUzVGQ2/a0lMNXJGTlhMR2pt/TS5qcGc" alt="Profile" />
+              <AvatarImage src={`https://api.dicebear.com/9.x/miniavs/svg?seed=${user.name+ new Date().getTime()}`} alt="Profile" />
               <AvatarFallback className="text-2xl bg-[#0F2A43] text-white">JD</AvatarFallback>
             </Avatar>
             <Button
