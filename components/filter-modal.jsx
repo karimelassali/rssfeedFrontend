@@ -47,10 +47,14 @@ export function FilterModal({
         const formattedSources = uniqueSources.map(source => {
           // Extract domain from URL if it looks like a URL
           let domain = source;
+          let favicon = "";
+          
           if (source.includes('://')) {
             try {
               const url = new URL(source);
               domain = url.hostname.replace('www.', '');
+              // Add favicon URL
+              favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
             } catch (e) {
               console.error("Error parsing URL:", source, e);
               // Keep original if URL parsing fails
@@ -60,7 +64,8 @@ export function FilterModal({
           return {
             id: source,
             name: domain || source, // Fallback to original source if domain extraction fails
-            originalUrl: source
+            originalUrl: source,
+            favicon: favicon
           };
         });
         
@@ -97,6 +102,40 @@ export function FilterModal({
 
   const handleClearFilters = () => {
     setSelectedSources([]);
+  };
+
+  // Function to get first letter or icon with fallback
+  const getSourceIcon = (source) => {
+    const firstLetter = source.name.charAt(0).toUpperCase();
+    
+    if (source.favicon) {
+      return (
+        <div className="w-6 h-6 flex items-center justify-center rounded overflow-hidden">
+          <img 
+            src={source.favicon} 
+            alt={`${source.name} icon`} 
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.style.display = 'none';
+              e.target.parentNode.innerHTML = firstLetter;
+            }}
+          />
+        </div>
+      );
+    }
+    
+    return (
+      <div
+        className={`w-6 h-6 flex items-center justify-center rounded ${
+          selectedSources.includes(source.id)
+            ? "bg-green-500"
+            : "bg-gray-400"
+        }`}
+      >
+        {firstLetter}
+      </div>
+    );
   };
 
   return (
@@ -158,15 +197,7 @@ export function FilterModal({
                   : "bg-gray-100 text-gray-900"
               }`}
             >
-              <div
-                className={`w-6 h-6 flex items-center justify-center rounded ${
-                  selectedSources.includes(source.id)
-                    ? "bg-green-500"
-                    : "bg-gray-400"
-                }`}
-              >
-                {source.name.charAt(0).toUpperCase()}
-              </div>
+              {getSourceIcon(source)}
               <span className="truncate">{source.name}</span>
             </button>
           ))

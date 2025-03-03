@@ -56,16 +56,29 @@ export default function DigiNews() {
     
     // Apply active filters if any
     if (activeFilters.length > 0) {
-      activeFilters.forEach(filter => {
-        // Check if filter is an object with type and value
-        if (typeof filter === 'object' && filter.type === 'source' && filter.value) {
-          results = results.filter(item => item.source === filter.value);
-        } 
-        // If filter is just a string (backward compatibility)
-        else if (typeof filter === 'string') {
-          results = results.filter(item => item.source === filter);
-        }
+      // Log the full structure of the filters to debug
+      console.log("Active filters detail:", JSON.stringify(activeFilters));
+      
+      results = results.filter(item => {
+        // If no source, skip this item
+        if (!item.source) return false;
+        
+        // Check if any filter matches this item
+        return activeFilters.some(filter => {
+          // Handle filter as object with type and value
+          if (typeof filter === 'object' && filter.type === 'source' && filter.value) {
+            return item.source === filter.value;
+          }
+          // Handle filter as string (backward compatibility)
+          if (typeof filter === 'string') {
+            return item.source === filter;
+          }
+          return false;
+        });
       });
+      
+      // Log filtered results count for debugging
+      console.log("After filtering by source, items remaining:", results.length);
     }
     
     // Apply search query if any
@@ -125,8 +138,8 @@ export default function DigiNews() {
       );
 
       if (isLoadMore) {
-        // Replace existing data with only the new page data
-        setAllData(filteredNewData);
+        // Append new data to existing data
+        setAllData(prevData => [...prevData, ...filteredNewData]);
       } else {
         // Replace existing data for first page
         setAllData(filteredNewData);
@@ -171,6 +184,28 @@ export default function DigiNews() {
     const nextPage = currentPage + 1;
     setCurrentPage(nextPage);
     fetchData(nextPage, true);
+  };
+
+  // Extract domain from URL
+  const getDomainFromUrl = (url) => {
+    if (!url || typeof url !== 'string') return '';
+    
+    try {
+      if (url.includes('://')) {
+        const urlObj = new URL(url);
+        return urlObj.hostname.replace('www.', '');
+      }
+      return url;
+    } catch (e) {
+      console.error("Error extracting domain:", e);
+      return url;
+    }
+  };
+
+  // Get favicon for a domain
+  const getFavicon = (url) => {
+    const domain = getDomainFromUrl(url);
+    return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
   };
 
   // Calculate time difference for publication date
@@ -223,6 +258,31 @@ export default function DigiNews() {
         const years = Math.floor(months / 12);
         return `${years} ${years === 1 ? "anno" : "anni"} fa (${dateTimeString})`;
     }
+  };
+
+  // Custom source icon component
+  const SourceIcon = ({ source }) => {
+    const domain = getDomainFromUrl(source);
+    const favicon = getFavicon(source);
+    const firstLetter = domain.charAt(0).toUpperCase();
+    
+    return (
+      <div className="relative">
+        <div className="bg-green-500 text-white p-1.5 rounded text-sm font-medium min-w-[28px] h-[28px] text-center flex items-center justify-center overflow-hidden">
+          <img 
+            src={favicon} 
+            alt={domain}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.style.display = 'none';
+              e.target.parentNode.innerHTML = firstLetter;
+            }}
+          />
+          <span className="absolute opacity-0">{firstLetter}</span>
+        </div>
+      </div>
+    );
   };
 
   // Render content based on loading, error, or data state
@@ -281,13 +341,11 @@ export default function DigiNews() {
             className="border-b border-gray-200 pb-6 last:border-0 relative"
           >
             <div className="flex items-start gap-3">
-              <div className="bg-green-500 text-white p-1.5 rounded text-sm font-medium min-w-[28px] text-center" aria-hidden="true">
-                {item.source && item.source.charAt(0).toUpperCase()}
-              </div>
+              <SourceIcon source={item.source} />
 
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium mb-1 truncate">
-                  {item.source}
+                  {getDomainFromUrl(item.source)}
                 </p>
                 <h2 className="text-base font-semibold mb-2 line-clamp-1">
                   {item.title}
@@ -319,7 +377,7 @@ export default function DigiNews() {
                       });
                   
                       // Extract domain from source URL
-                      const domain = new URL(item.source).hostname.replace('www.', '');
+                      const domain = getDomainFromUrl(item.source);
                       toast.success(`${req.data.message}`, {
                         position: "bottom-right",
                         duration: 3000,
@@ -368,9 +426,8 @@ export default function DigiNews() {
               </>
             ) : (
               <>
-              {filteredData.length}
+                <span>Load More Articles ({filteredData.length})</span>
                 <ChevronDown className="h-5 w-5" />
-                <span>Load More Articles</span>
               </>
             )}
           </button>
@@ -414,6 +471,11 @@ export default function DigiNews() {
             >
               <Filter className="h-5 w-5" aria-hidden="true" />
               <span className="text-sm font-medium">Filtri</span>
+              {activeFilters.length > 0 && (
+                <span className="bg-green-500 text-white text-xs px-2 py-0.5 rounded-full">
+                  {activeFilters.length}
+                </span>
+              )}
             </button>
             
             {authToken ? (
@@ -456,7 +518,7 @@ export default function DigiNews() {
         <FilterModal
           isOpen={isFilterOpen}
           onClose={() => setIsFilterOpen(false)}
-          initialFilters={activeFilters.map(f => f.value)} // Change this if your filter structure is different
+          initialFilters={activeFilters.map(f => typeof f === 'object' ? f.value : f)} // Handle both object and string filters
           onApply={(filters) => {
             console.log("Received filters from modal:", filters);
             setActiveFilters(filters);
