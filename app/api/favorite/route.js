@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import axios from "axios";
 
-export async function POST(request: Request) {
+export async function POST(request) {
   // Retrieve user data from cookies
   const userCookie = request.cookies.get("user")?.value;
 
