@@ -403,56 +403,19 @@ export default function DigiNews() {
                     <PenSquare className="h-4 w-4 text-white" aria-hidden="true" />
                   </Link>
                   <button
-  onClick={async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    try {
-      // Make API request to store favorite source
-      const req = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}api/favorite_sources/store/`,
-        {
-          source: item.source,
-          user_id: userData.id
-        },
-        {
-          headers: {
-            "Content-Type": "application/json", // Ensure the right content-type is sent
-            // Add your Authorization header here if needed
-            // "Authorization": `Bearer ${yourAuthToken}`
-          }
-        }
-      );
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const response = await axios.get(`http://localhost:3000/api/favorite?source=${item.source}`);
+                 
+                    toast(response.data.message, { duration: 3000, position: 'bottom-right', style: { backgroundColor: '#34C759', color: 'white' } });
 
-      // Extract domain from source URL (if necessary)
-      const domain = getDomainFromUrl(item.source);
-      
-      // Show success message
-      toast.success(`${req.data.message}`, {
-        position: "bottom-right",
-        duration: 3000,
-        style: {
-          background: "#4CAF50",
-          color: "white",
-          border: "none"
-        }
-      });
-    } catch (err) {
-      // Log the full error for better debugging
-      console.error("Error processing source URL:", err.response || err.message || err);
-      
-      // Show error message if request fails
-      toast.error("Invalid source URL", {
-        position: "bottom-right",
-        duration: 3000
-      });
-    }
-  }}
-  className="bg-yellow-400 hover:bg-yellow-500 p-1.5 rounded-lg transition-colors cursor-pointer"
-  aria-label="Subscribe to notifications from this source"
->
-  <Star className="h-4 w-4 text-white hover:scale-110 transform transition-transform" aria-hidden="true" />
+                  }}
+                    className="bg-yellow-400 hover:bg-yellow-500 p-1.5 rounded-lg transition-colors cursor-pointer"
+                    aria-label="Subscribe to notifications from this source"
+                  >
+                    <Star className="h-4 w-4 text-white hover:scale-110 transform transition-transform" aria-hidden="true" />
                   </button>
-
                 </div>
               )}
             </div>
