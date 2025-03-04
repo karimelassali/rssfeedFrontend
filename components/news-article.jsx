@@ -79,104 +79,111 @@ const ArticleEditForm = ({ title, article, onCancel, onContinue }) => {
 };
 
 // Main NewsArticle Component
-export default function NewsArticle({id}) {
-  const [isEditing, setIsEditing] = useState(false)
-  const [showEditForm, setShowEditForm] = useState(false)
-  const [articleData, setArticleData] = useState({})
+export default function NewsArticle({ id }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [randomImageUrl, setRandomImageUrl] = useState('');
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [articleData, setArticleData] = useState({});
   const [viewOriginal, setViewOriginal] = useState({
     title: false,
     description: false
-  })
+  });
   const [continuingButtons, setContinuingButtons] = useState({
     aiContinue: false,
-  })
-  const [annulingEditing, setAnnulingEditing] = useState(false)
-  const [aiResponse, setAiResponse] = useState("")
-  const [aiLoading, setAiLoading] = useState(false)
-  const [showRegenerateButton, setShowRegenerateButton] = useState(false)
-  const [error, setError] = useState(null)
+  });
+  const [annulingEditing, setAnnulingEditing] = useState(false);
+  const [aiResponse, setAiResponse] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [showRegenerateButton, setShowRegenerateButton] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Generate random image URL
+  useEffect(() => {
+    const randomNum = Math.floor(Math.random() * 1000);
+    setRandomImageUrl(`https://picsum.photos/500/300?random=${randomNum}`);
+  }, [id]);
 
   const toggleEdit = () => {
-    setIsEditing(!isEditing)
-    setAiLoading(true)
-    setShowRegenerateButton(false)
-    setError(null)
-  }
+    setIsEditing(!isEditing);
+    setAiLoading(true);
+    setShowRegenerateButton(false);
+    setError(null);
+  };
 
   const handleEditFormSubmit = (formData) => {
     setAiResponse({
       title: formData.title,
       description: formData.article
-    })
-    setShowEditForm(false)
-    setContinuingButtons(prev => ({...prev, aiContinue: true}))
-  }
+    });
+    setShowEditForm(false);
+    setContinuingButtons(prev => ({ ...prev, aiContinue: true }));
+  };
 
   const handleViewOriginal = (type) => {
     setViewOriginal(prev => ({
       ...prev,
       [type]: true
-    }))
-  }
+    }));
+  };
 
   const handleBackToAiContent = () => {
     setViewOriginal({
       title: false,
       description: false
-    })
-  }
+    });
+  };
 
   useEffect(() => {
     const fetchArticle = async () => {
       try {
-        const response = await axios.get(`/api/article/${id}`)
-        setArticleData(response.data)
+        const response = await axios.get(`/api/article/${id}`);
+        setArticleData(response.data);
       } catch (error) {
-        console.error('Error fetching article:', error)
-        setError('Failed to load article')
+        console.error('Error fetching article:', error);
+        setError('Failed to load article');
       }
-    }
+    };
 
     if (id) {
-      fetchArticle()
+      fetchArticle();
     }
-  }, [id])
+  }, [id]);
 
   useEffect(() => {
     const generateAiContent = async () => {
       if (isEditing && articleData.title && articleData.description) {
-        setAiLoading(true)
-        setError(null)
+        setAiLoading(true);
+        setError(null);
         
         try {
           const response = await axios.post('/api/ai/', {
             articleTitle: articleData.title,
             articleDescription: articleData.description,
-          })
-          setAiResponse(response.data)
-          setAiLoading(false)
-          setTimeout(() => setShowRegenerateButton(true), 5000)
+          });
+          setAiResponse(response.data);
+          setAiLoading(false);
+          setTimeout(() => setShowRegenerateButton(true), 5000);
         } catch (error) {
-          console.error('Error generating AI content:', error)
-          setError('Failed to generate AI content')
-          setAiLoading(false)
+          console.error('Error generating AI content:', error);
+          setError('Failed to generate AI content');
+          setAiLoading(false);
         }
       }
-    }
+    };
 
-    generateAiContent()
-  }, [isEditing, articleData])
+    generateAiContent();
+  }, [isEditing, articleData]);
 
   const annulingEditingListener = (data) => {
-    setAnnulingEditing(true)
+    setAnnulingEditing(true);
     setTimeout(() => {
-      setAnnulingEditing(false)
-    }, 2000)
+      setAnnulingEditing(false);
+    }, 2000);
     setContinuingButtons(prev => ({
       ...prev,
       aiContinue: false,
-    }))
-  }
+    }));
+  };
 
   const renderMainArticleView = () => (
     articleData.title && articleData.description ? (
@@ -205,10 +212,13 @@ export default function NewsArticle({id}) {
 
         <div className="relative w-full h-64 mb-6">
           <Image
-          src="https://imgs.search.brave.com/QFb1Hs4fK8JkD2z81ohmngICaw1V5QvgTo4Fynp6h2A/rs:fit:500:0:0:0/g:ce/aHR0cHM6Ly90My5m/dGNkbi5uZXQvanBn/LzAxLzAxLzAxLzA0/LzM2MF9GXzEwMTAx/MDQzNl9QcDJmUjYw/eGl5bHg5ZEd4Nmhu/aG44YXhZMUVXcFlh/NC5qcGc"
-          alt="Article image"
+            src={randomImageUrl}
+            alt="Article image"
             fill
             className="rounded-lg object-cover"
+            onError={(e) => {
+              e.target.src = '/default-image.jpg'; // Fallback image
+            }}
           />
         </div>
 
@@ -219,7 +229,7 @@ export default function NewsArticle({id}) {
         <div className="fixed flex justify-center bottom-0 left-0 right-0 p-4 bg-white border-t">
           <Button
             onClick={toggleEdit}
-            className="w-[50%]  bg-green-500 hover:bg-green-600 text-white py-4 rounded-full flex items-center justify-center gap-2 max-sm:w-full"
+            className="w-[50%] bg-green-500 hover:bg-green-600 text-white py-4 rounded-full flex items-center justify-center gap-2 max-sm:w-full"
           >
             <Edit2 className="w-4 h-4" />
             Utilizza e rielabora
@@ -229,7 +239,8 @@ export default function NewsArticle({id}) {
     ) : (
       <ArticleSkeleton />
     )
-  )
+  );
+
 
   const renderEditContent = () => {
     if (aiLoading) {
@@ -412,12 +423,12 @@ export default function NewsArticle({id}) {
               <Card onClick={toggleEdit} className="mb-6 cursor-pointer hover:bg-gray-100">
                 <CardHeader className="flex flex-row items-center gap-4 p-4">
                   <div className="relative w-12 h-12">
-                    <Image
-                      src="https://imgs.search.brave.com/QFb1Hs4fK8JkD2z81ohmngICaw1V5QvgTo4Fynp6h2A/rs:fit:500:0:0:0/g:ce/aHR0cHM6Ly90My5m/dGNkbi5uZXQvanBn/LzAxLzAxLzAxLzA0/LzM2MF9GXzEwMTAx/MDQzNl9QcDJmUjYw/eGl5bHg5ZEd4Nmhu/aG44YXhZMUVXcFlh/NC5qcGc"
-                      alt="Article thumbnail"
-                      fill
-                      className="rounded object-cover"
-                    />
+                  <Image
+                    src={randomImageUrl}
+                    alt="Article image"
+                    fill
+                    className="rounded-lg object-cover"
+                  />
                   </div>
                   <div>
                     <h3 className="text-sm font-medium">
