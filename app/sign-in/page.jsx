@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { Loader2 } from 'lucide-react';
 import Cookies from 'js-cookie';
+import { ChevronLeft } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 
 function Page() {
@@ -100,7 +102,7 @@ function Page() {
             </div>
           </div>
 
-
+            
           <div className="flex items-center justify-between">
             {/* <div className="flex items-center">
               <input
@@ -138,6 +140,59 @@ function Page() {
           </p> */}
           
         </form>
+        <motion.ul
+          className="list-disc list-inside space-y-2"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          New Features
+          <motion.li
+            className="flex items-center"
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <ChevronLeft className="h-5 w-5 mr-2" />
+            1- Settings page with user API token and all information.
+          </motion.li>
+          <motion.li
+            className="flex items-center"
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <ChevronLeft className="h-5 w-5 mr-2" />
+            2- Login page with username and password, with cookies (temporary).
+          </motion.li>
+          <motion.li
+            className="flex items-center"
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            <ChevronLeft className="h-5 w-5 mr-2" />
+            3- Add system to delete duplicated sources.
+          </motion.li>
+          <motion.li
+            className="flex items-center"
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+          >
+            <ChevronLeft className="h-5 w-5 mr-2" />
+            4- User can add his favorite source and search on it in settings page.
+          </motion.li>
+          <motion.li
+            className="flex items-center"
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.8 }}
+          >
+            <ChevronLeft className="h-5 w-5 mr-2" />
+            5- Add new sources icon fetching.
+          </motion.li>
+        </motion.ul>
       </div>
     </div>
   );
