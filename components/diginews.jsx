@@ -406,8 +406,9 @@ export default function DigiNews() {
                   onClick={async (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    const response = await axios.get(`api/favorite?source=${item.source}`);
-                 
+                    const response = await axios.post('/api/favorite', {
+                      source: item.source
+                    });                 
                     toast(response.data.message, { duration: 3000, position: 'bottom-right', style: { backgroundColor: '#34C759', color: 'white' } });
 
                   }}

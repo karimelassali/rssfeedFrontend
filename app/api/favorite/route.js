@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import axios from "axios";
 
-export async function GET(request) {
+export async function POST(request: Request) {
   // Retrieve user data from cookies
   const userCookie = request.cookies.get("user")?.value;
 
@@ -16,8 +16,8 @@ export async function GET(request) {
     // Parse the user data from the cookie
     const user = JSON.parse(userCookie);
     
-    // Get source from query parameters
-    const source = new URL(request.url).searchParams.get('source');
+    // Parse the request body
+    const { source } = await request.json();
 
     if (!source) {
       return NextResponse.json({
