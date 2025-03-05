@@ -6,6 +6,10 @@ import dynamic from "next/dynamic";
 import { Toaster, toast } from "sonner";
 import DigiNewsSkeleton from "./ui/skeletons/diginews";
 import Cookies from "js-cookie";
+import { ArrowLeft, Cog } from "lucide-react";
+import { LogOut } from "lucide-react";
+
+
 
 
 // Lazy load the FilterModal component
@@ -496,17 +500,75 @@ export default function DigiNews() {
             </button>
             
             {authToken ? (
-              <div className="flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-lg">
-                <span className="text-sm text-blue-600">
-                  {userEmail}
-                </span>
-                <Link
-                href="/settings"
-                className="flex items-center justify-center bg-blue-500 border border-blue-500 p-2 rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium text-white"
-              >
-                Settings
-              </Link>
-              </div>
+              <div className="flex items-center gap-4">
+              {authToken ? (
+                <div className="flex items-center space-x-3 bg-blue-50/70 p-2.5 rounded-xl border border-blue-100 shadow-sm">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-blue-700 truncate max-w-[150px]">
+                      {userEmail}
+                    </span>
+                    <div className="flex space-x-2 mt-1.5">
+                      <Link
+                        href="/dashboard"
+                        className="group flex items-center justify-center 
+                          bg-blue-500 text-white px-3 py-1.5 rounded-lg 
+                          hover:bg-blue-600 transition-all duration-300 
+                          text-xs font-semibold tracking-tight
+                          focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      >
+                        <ArrowLeft className="h-4 w-4 mr-1.5 group-hover:animate-pulse" aria-hidden="true" />
+                        Dashboard
+                      </Link>
+                      <Link
+                        href="/settings"
+                        className="group flex items-center justify-center 
+                          border border-blue-500 text-blue-600 
+                          px-3 py-1.5 rounded-lg 
+                          hover:bg-blue-50 transition-all duration-300 
+                          text-xs font-semibold tracking-tight
+                          focus:outline-none focus:ring-2 focus:ring-blue-300"
+                      >
+                        <Cog className="h-4 w-4 mr-1.5 group-hover:rotate-45 transition-transform" aria-hidden="true" />
+                        Settings
+                      </Link>
+                    </div>
+                  </div>
+                  <button 
+                    // onClick={handleLogout}
+                    className="hover:bg-red-50 p-1.5 rounded-full group"
+                    aria-label="Logout"
+                  >
+                    <LogOut 
+                      className="h-5 w-5 text-gray-500 group-hover:text-red-500 transition-colors" 
+                      aria-hidden="true" 
+                    />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-3">
+                  <Link
+                    href="/sign-in"
+                    className="flex items-center justify-center 
+                      border border-blue-500 text-blue-600
+                      px-4 py-2 rounded-lg 
+                      hover:bg-blue-50 transition-colors 
+                      text-sm font-medium"
+                  >
+                    Accedi
+                  </Link>
+                  <Link
+                    href="/settings"
+                    className="flex items-center justify-center 
+                      bg-blue-500 text-white 
+                      px-4 py-2 rounded-lg 
+                      hover:bg-blue-600 transition-colors 
+                      text-sm font-medium"
+                  >
+                    Settings
+                  </Link>
+                </div>
+              )}
+            </div>
             ) : (
               <>
                 <Link
