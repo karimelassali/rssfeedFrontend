@@ -37,7 +37,6 @@
     "onesignal": "^0.1.2",
     "onesignal-cordova-plugin": "^5.2.9",
     "react": "^19.0.0",
-    "react-beautiful-dnd": "^13.1.1",
     "react-day-picker": "^9.5.1",
     "react-dom": "^19.0.0",
     "react-intersection-observer": "^9.15.1",
