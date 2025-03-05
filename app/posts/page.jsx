@@ -1,4 +1,4 @@
-import Dashboard from "../../dashboard"
+import Dashboard from "../dashboard/page"
 
 export default function PostsPage() {
   return (
