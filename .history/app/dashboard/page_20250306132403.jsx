@@ -25,73 +25,93 @@ const colors = {
   green: "#22C55E",
 }
 
+// Sample data for posts
+
 export default function Dashboard({ isHomepage = true }) {
-  const [posts, setPosts] = useState([])
+  const [samplePosts, setSamplePosts] = useState([
+    // {
+    //   id: "1",
+    //   title: "10 Tips for Better Content Marketing",
+    //   description: "Learn how to improve your content marketing strategy with these expert tips.",
+    //   publishDate: "2023-10-15",
+    //   status: "published",
+    //   image: "https://imgs.search.brave.com/CFoRBLlcAtS1HK3P3N1exBlQGBpxtkNK1f-BqJVLE9o/rs:fit:500:0:0:0/g:ce/aHR0cHM6Ly9keWwz/NDdoaXd2M2N0LmNs/b3VkZnJvbnQubmV0/L2FwcC91cGxvYWRz/LzIwMjUvMDIvSU1H/Mi1zY2FsZWQuanBn",
+    //   category: "Marketing",
+    // },
+    // {
+    //   id: "2",
+    //   title: "The Future of AI in Journalism",
+    //   description: "Exploring how artificial intelligence is transforming the journalism industry.",
+    //   publishDate: "2023-10-20",
+    //   status: "published",
+    //   image: "https://imgs.search.brave.com/CFoRBLlcAtS1HK3P3N1exBlQGBpxtkNK1f-BqJVLE9o/rs:fit:500:0:0:0/g:ce/aHR0cHM6Ly9keWwz/NDdoaXd2M2N0LmNs/b3VkZnJvbnQubmV0/L2FwcC91cGxvYWRz/LzIwMjUvMDIvSU1H/Mi1zY2FsZWQuanBn",
+    //   category: "Technology",
+    // },
+    // {
+    //   id: "3",
+    //   title: "Understanding Web3 and Blockchain",
+    //   description: "A comprehensive guide to understanding Web3 technologies and blockchain.",
+    //   publishDate: "2023-10-25",
+    //   status: "scheduled",
+    //   image: "https://imgs.search.brave.com/CFoRBLlcAtS1HK3P3N1exBlQGBpxtkNK1f-BqJVLE9o/rs:fit:500:0:0:0/g:ce/aHR0cHM6Ly9keWwz/NDdoaXd2M2N0LmNs/b3VkZnJvbnQubmV0/L2FwcC91cGxvYWRz/LzIwMjUvMDIvSU1H/Mi1zY2FsZWQuanBn",
+    //   category: "Technology",
+    // },
+    // {
+    //   id: "4",
+    //   title: "Social Media Trends for 2024",
+    //   description: "Stay ahead of the curve with these predicted social media trends for next year.",
+    //   publishDate: "2023-11-01",
+    //   status: "scheduled",
+    //   image: "https://imgs.search.brave.com/CFoRBLlcAtS1HK3P3N1exBlQGBpxtkNK1f-BqJVLE9o/rs:fit:500:0:0:0/g:ce/aHR0cHM6Ly9keWwz/NDdoaXd2M2N0LmNs/b3VkZnJvbnQubmV0/L2FwcC91cGxvYWRz/LzIwMjUvMDIvSU1H/Mi1zY2FsZWQuanBn",
+    //   category: "Social Media",
+    // },
+    // {
+    //   id: "5",
+    //   title: "How to Optimize Your SEO Strategy",
+    //   description: "Failed to publish due to missing metadata.",
+    //   publishDate: "2023-10-10",
+    //   status: "failed",
+    //   image: "https://imgs.search.brave.com/CFoRBLlcAtS1HK3P3N1exBlQGBpxtkNK1f-BqJVLE9o/rs:fit:500:0:0:0/g:ce/aHR0cHM6Ly9keWwz/NDdoaXd2M2N0LmNs/b3VkZnJvbnQubmV0/L2FwcC91cGxvYWRz/LzIwMjUvMDIvSU1H/Mi1zY2FsZWQuanBn",
+    //   category: "SEO",
+    // },
+  ])
   const [searchTerm, setSearchTerm] = useState("")
   const [activeTab, setActiveTab] = useState("all")
-  const [filteredPosts, setFilteredPosts] = useState([])
+  const [filteredPosts, setFilteredPosts] = useState(samplePosts)
   const [scheduledPosts, setScheduledPosts] = useState([])
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState(null)
   const [draggedItem, setDraggedItem] = useState(null)
   const [draggedOverItem, setDraggedOverItem] = useState(null)
   
-  // Fetch posts with error handling and loading states
+
+
   useEffect(() => {
-    const controller = new AbortController()
-    const signal = controller.signal
-    
     const fetchPosts = async () => {
-      setIsLoading(true)
-      setError(null)
-      
       try {
-        const response = await fetch('/api/publishedArticles', { 
-          signal,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        })
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`)
-        }
-        
+        const response = await fetch('/api/publishedArticles')
         const data = await response.json()
-        
-        // Map status to publishType for all posts
-        const postsWithPublishType = data.data.map(post => ({
-          ...post,
-          publishType: post.status, // Copy original status to publishType
-          status: undefined // Remove the status property
-        }))
-        
-        setPosts(postsWithPublishType)
+        setSamplePosts(data.data)
+        setIsLoading(false)
       } catch (error) {
-        if (error.name !== 'AbortError') {
-          console.error('Error fetching posts:', error)
-          setError('Failed to load posts. Please try again later.')
-        }
-      } finally {
+        console.error('Error fetching posts:', error)
         setIsLoading(false)
       }
     }
 
     fetchPosts()
-    
-    // Clean up the request if the component unmounts
-    return () => controller.abort()
-  }, [])
+  },[])
+
+  // Simulate loading state
+  // useEffect(() => {
+  //   const timer = setTimeout(() => {
+  //     setIsLoading(false)
+  //   }, 1000)
+  //   return () => clearTimeout(timer)
+  // }, [])
 
   // Filter posts based on search term and active tab
   useEffect(() => {
-    if (posts.length === 0) {
-      setFilteredPosts([])
-      setScheduledPosts([])
-      return
-    }
-    
-    let result = [...posts]
+    let result = samplePosts
 
     // Filter by search term
     if (searchTerm) {
@@ -103,20 +123,20 @@ export default function Dashboard({ isHomepage = true }) {
       )
     }
 
-    // Filter by publishType
+    // Filter by status
     if (activeTab !== "all") {
-      result = result.filter((post) => post.publishType === activeTab)
+      result = result.filter((post) => post.status === activeTab)
     }
 
     setFilteredPosts(result)
 
     // Set scheduled posts separately for reordering
     setScheduledPosts(
-      posts
-        .filter((post) => post.publishType === "scheduled")
+      samplePosts
+        .filter((post) => post.status === "scheduled")
         .sort((a, b) => new Date(a.publishDate) - new Date(b.publishDate)),
     )
-  }, [searchTerm, activeTab, posts])
+  }, [searchTerm, activeTab])
 
   // Drag and drop handlers
   const handleDragStart = (e, index) => {
@@ -134,7 +154,7 @@ export default function Dashboard({ isHomepage = true }) {
     e.dataTransfer.dropEffect = "move";
   };
 
-  const handleDrop = async (e, index) => {
+  const handleDrop = (e, index) => {
     e.preventDefault();
     
     // If the item is dropped in a different position
@@ -150,19 +170,6 @@ export default function Dashboard({ isHomepage = true }) {
       
       // Update the state
       setScheduledPosts(newItems);
-      
-      // Here you could add an API call to update the order on the server
-      try {
-        // Example API call to update order
-        // await fetch('/api/updateScheduledOrder', {
-        //   method: 'POST',
-        //   headers: { 'Content-Type': 'application/json' },
-        //   body: JSON.stringify(newItems.map(item => item.id))
-        // });
-      } catch (error) {
-        console.error('Failed to update order:', error);
-        // You could revert the order here if the API call fails
-      }
     }
     
     // Reset
@@ -176,8 +183,8 @@ export default function Dashboard({ isHomepage = true }) {
   };
 
   // Status badge component with appropriate styling
-  const StatusBadge = ({ publishType }) => {
-    switch (publishType) {
+  const StatusBadge = ({ status }) => {
+    switch (status) {
       case "published":
         return (
           <Badge className="bg-[#22C55E] hover:bg-[#22C55E]/80 text-white flex items-center gap-1">
@@ -217,7 +224,7 @@ export default function Dashboard({ isHomepage = true }) {
 
           <div className="p-6 flex-1 flex flex-col">
             <div className="flex justify-between items-start mb-2">
-              <StatusBadge publishType={post.publishType} />
+              <StatusBadge status={post.status} />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -242,7 +249,7 @@ export default function Dashboard({ isHomepage = true }) {
                 {post.category}
               </Badge>
               <span className="text-xs text-muted-foreground">
-                {post.publishType === "published" ? "Published" : post.publishType === "scheduled" ? "Scheduled" : "Failed"} on{" "}
+                {post.status === "published" ? "Published" : post.status === "scheduled" ? "Scheduled" : "Failed"} on{" "}
                 {post.publishDate}
               </span>
             </div>
@@ -291,7 +298,7 @@ export default function Dashboard({ isHomepage = true }) {
               <div className="flex-1">
                 <h3 className="font-medium">{post.title}</h3>
                 <div className="flex items-center gap-2 mt-1">
-                  <StatusBadge publishType={post.publishType} />
+                  <StatusBadge status={post.status} />
                   <span className="text-xs text-muted-foreground">
                     Scheduled for {post.publishDate}
                   </span>
@@ -328,7 +335,7 @@ export default function Dashboard({ isHomepage = true }) {
             <p className="text-muted-foreground mt-1">Manage and monitor all your published content</p>
           </div>
           {isHomepage && (
-            <Link href="/new-post" className="bg-[#22C55E] p-2 flex items-center justify-center rounded-md hover:bg-[#22C55E]/90 text-white">
+            <Link href="/" className="bg-[#22C55E] p-2 flex items-center justify-center rounded-md hover:bg-[#22C55E]/90 text-white">
               <Plus className="mr-2 h-4 w-4" /> Publish new post
             </Link>
           )}
@@ -370,14 +377,6 @@ export default function Dashboard({ isHomepage = true }) {
             />
           </div>
         </div>
-
-        {/* Error message */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
-            <strong className="font-bold">Error: </strong>
-            <span className="block sm:inline">{error}</span>
-          </div>
-        )}
 
         {/* Posts Grid */}
         <AnimatePresence mode="wait">
