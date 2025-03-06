@@ -140,7 +140,7 @@ function Page() {
           </p> */}
           
         </form>
-        <h5 className='text-2xl font-bold text-green-600 ' >New Dashboard Systeme</h5>
+        {/* <h5 className='text-2xl font-bold text-green-600 ' >New Dashboard Systeme</h5>
         <motion.ul
           className="list-disc list-inside space-y-2"
           initial={{ opacity: 0 }}
@@ -193,7 +193,7 @@ function Page() {
             <ChevronLeft className="h-5 w-5 mr-2" />
             5- Add new sources icon fetching.
           </motion.li>
-        </motion.ul>
+        </motion.ul> */}
       </div>
     </div>
   );
