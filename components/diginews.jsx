@@ -9,10 +9,6 @@ import Cookies from "js-cookie";
 import { ArrowLeft, Cog } from "lucide-react";
 import { LogOut } from "lucide-react";
 
-
-
-
-// Lazy load the FilterModal component
 const FilterModal = dynamic(() => import('./filter-modal').then(mod => ({ default: mod.FilterModal })), {
   loading: () => <div className="animate-pulse">Loading...</div>
 });
@@ -20,8 +16,8 @@ const FilterModal = dynamic(() => import('./filter-modal').then(mod => ({ defaul
 export default function DigiNews() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState([]);
-  const [allData, setAllData] = useState([]); // All fetched data
-  const [filteredData, setFilteredData] = useState([]); // Data after search/filter
+  const [allData, setAllData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState(null);
@@ -31,9 +27,18 @@ export default function DigiNews() {
   const [userEmail, setUserEmail] = useState(null);
   const [debugInfo, setDebugInfo] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  
+
+  // Static list of sources
+  const staticSources = [
+    'https://appweb.regione.vda.it/DBWeb/Comunicati.nsf/RSScomunicati.xml',
+    'https://www.ansa.it/valledaosta/notizie/valledaosta_rss.xml',
+    'https://www.comune.aosta.it/it/events/feed',
+    'https://www.comune.aosta.it/it/news/feed',
+    'https://pressevda.regione.vda.it/it/events/feed',
+    'https://pressevda.regione.vda.it/it/news/feed',
+  ];
+
   useEffect(() => {
-    // Access localStorage only on client side
     const token = Cookies.get('authToken');
     const userStr = Cookies.get('user');
     setAuthToken(token);
@@ -45,47 +50,31 @@ export default function DigiNews() {
       } catch (e) {
         console.error('Error parsing user data:', e);
       }
-    }else{
+    } else {
       window.location.href = '/sign-in';
     }
   }, []);
-  
-  // Apply filters and search to the data
+
   useEffect(() => {
     if (allData.length === 0) return;
-    
-    console.log("Applying filters to data:", allData.length, "items with", activeFilters.length, "filters");
-    
+
     let results = [...allData];
-    
-    // Apply active filters if any
+
     if (activeFilters.length > 0) {
-      // Log the full structure of the filters to debug
-      console.log("Active filters detail:", JSON.stringify(activeFilters));
-      
       results = results.filter(item => {
-        // If no source, skip this item
         if (!item.source) return false;
-        
-        // Check if any filter matches this item
         return activeFilters.some(filter => {
-          // Handle filter as object with type and value
           if (typeof filter === 'object' && filter.type === 'source' && filter.value) {
             return item.source === filter.value;
           }
-          // Handle filter as string (backward compatibility)
           if (typeof filter === 'string') {
             return item.source === filter;
           }
           return false;
         });
       });
-      
-      // Log filtered results count for debugging
-      console.log("After filtering by source, items remaining:", results.length);
     }
-    
-    // Apply search query if any
+
     if (searchQuery.trim() !== "") {
       const query = searchQuery.toLowerCase().trim();
       results = results.filter(item => 
@@ -93,63 +82,32 @@ export default function DigiNews() {
         (item.source && item.source.toLowerCase().includes(query))
       );
     }
-    
-    console.log("Filtered results:", results.length, "items");
+
     setFilteredData(results);
   }, [allData, searchQuery, activeFilters]);
 
   const fetchData = async (page = 1, isLoadMore = false) => {
-    if (isLoadMore) {
-      setIsLoadingMore(true);
-    } else {
-      setIsLoading(true);
-    }
+    if (isLoadMore) setIsLoadingMore(true);
+    else setIsLoading(true);
 
     try {
       const response = await axios.get(`/api/articles?page=${page}`, {
-        params: {
-          activeFilters: JSON.stringify(activeFilters),
-        },
+        params: { activeFilters: JSON.stringify(activeFilters) },
       });
 
-      // Log the full response for debugging
       console.log("API Response:", response.data);
-      
-      // Store debug info
-      setDebugInfo({
-        responseData: response.data,
-        page
-      });
+      setDebugInfo({ responseData: response.data, page });
 
-      // Check if response.data has the expected structure
-      if (!response.data || (!response.data.data && !Array.isArray(response.data))) {
-        console.error("Unexpected response structure:", response.data);
-        toast.error("Unexpected data format received", {
-          position: "bottom-right",
-          duration: 3000
-        });
-        return;
-      }
-
-      // Handle both Laravel pagination structure and direct array responses
-      const newData = Array.isArray(response.data) 
-        ? response.data 
-        : (response.data.data || []);
-      
-      // Filter sources that start with https://
+      const newData = Array.isArray(response.data) ? response.data : (response.data.data || []);
       const filteredNewData = newData.filter(item => 
         item.source && typeof item.source === 'string' && item.source.startsWith('https://')
       );
 
       if (isLoadMore) {
-        // Append new data to existing data
         setAllData(prevData => [...prevData, ...filteredNewData]);
       } else {
-        // Replace existing data for first page
         setAllData(filteredNewData);
       }
-      
-      console.log("Filtered data length:", filteredNewData.length);
     } catch (err) {
       console.error("Error fetching data:", err);
       setError("Failed to load news data: " + (err.message || "Unknown error"));
@@ -158,42 +116,37 @@ export default function DigiNews() {
         duration: 3000
       });
     } finally {
-      if (isLoadMore) {
-        setIsLoadingMore(false);
-      } else {
-        setIsLoading(false);
-      }
+      if (isLoadMore) setIsLoadingMore(false);
+      else setIsLoading(false);
     }
   };
 
-  // Fetch initial data
   useEffect(() => {
     setCurrentPage(1);
     fetchData(1, false);
-  }, [activeFilters]); // Only refetch when filters change, not on search
+  }, [activeFilters]);
 
-  // Clear search and filters
   const handleClearAll = () => {
     setActiveFilters([]);
     setSearchQuery("");
   };
 
-  // Clear search input
   const handleClearSearch = () => {
     setSearchQuery("");
   };
 
-  // Handle load more
+  const handleClearFilters = () => {
+    setActiveFilters([]); // Clear all filters to show normal data
+  };
+
   const handleLoadMore = () => {
     const nextPage = currentPage + 1;
     setCurrentPage(nextPage);
     fetchData(nextPage, true);
   };
 
-  // Extract domain from URL
   const getDomainFromUrl = (url) => {
     if (!url || typeof url !== 'string') return '';
-    
     try {
       if (url.includes('://')) {
         const urlObj = new URL(url);
@@ -206,111 +159,86 @@ export default function DigiNews() {
     }
   };
 
-  // Get favicon for a domain
   const getFavicon = (url) => {
     const domain = getDomainFromUrl(url);
     return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
   };
 
-  // Calculate time difference for publication date
   const getTimeDifference = (pubDate) => {
     const now = new Date();
     const published = new Date(pubDate);
-
-    // Handle future dates by taking absolute value
     const diffSeconds = Math.abs((now.getTime() - published.getTime()) / 1000);
     const isFuture = published > now;
     const prefix = isFuture ? "Tra " : "";
-
-    // Helper function to pad numbers with leading zeros
     const padZero = (num) => String(num).padStart(2, '0');
-
-    // Get date and time components for published date
     const day = padZero(published.getDate());
     const month = padZero(published.getMonth() + 1);
     const year = published.getFullYear();
     const hours24 = padZero(published.getHours());
     const minutesTime = padZero(published.getMinutes());
     const dateTimeString = `${day}/${month}/${year} alle ${hours24}:${minutesTime}`;
-
-    // Determine if published date is today
-    const isToday = now.getFullYear() === published.getFullYear() &&
-        now.getMonth() === published.getMonth() &&
-        now.getDate() === published.getDate();
-
-    // Determine if published date is yesterday
+    const isToday = now.toDateString() === published.toDateString();
     const yesterday = new Date(now);
     yesterday.setDate(now.getDate() - 1);
-    const isYesterday = published.getFullYear() === yesterday.getFullYear() &&
-        published.getMonth() === yesterday.getMonth() &&
-        published.getDate() === yesterday.getDate();
+    const isYesterday = yesterday.toDateString() === published.toDateString();
+    const diffDays = Math.floor(diffSeconds / (60 * 60 * 24));
 
-    // Calculate the difference in full calendar days
-    const publishedMidnight = new Date(published.getFullYear(), published.getMonth(), published.getDate());
-    const nowMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const diffDays = Math.floor((nowMidnight - publishedMidnight) / (1000 * 60 * 60 * 24));
-
-    // Calculate the number of full calendar months
     const getCalendarMonths = () => {
-        let months = (now.getFullYear() - published.getFullYear()) * 12;
-        months += now.getMonth() - published.getMonth();
-        if (now.getDate() < published.getDate()) {
-            months--;
-        }
-        return months;
+      let months = (now.getFullYear() - published.getFullYear()) * 12;
+      months += now.getMonth() - published.getMonth();
+      if (now.getDate() < published.getDate()) months--;
+      return months;
     };
     const months = getCalendarMonths();
 
-    // Calculate the number of full calendar years
     const getCalendarYears = () => {
-        let years = now.getFullYear() - published.getFullYear();
-        if (now.getMonth() < published.getMonth() ||
-            (now.getMonth() === published.getMonth() && now.getDate() < published.getDate())) {
-            years--;
-        }
-        return years;
+      let years = now.getFullYear() - published.getFullYear();
+      if (now.getMonth() < published.getMonth() || 
+          (now.getMonth() === published.getMonth() && now.getDate() < published.getDate())) {
+        years--;
+      }
+      return years;
     };
     const years = getCalendarYears();
 
-    // Handle time differences
     if (diffSeconds < 60) {
-        return `${prefix}${Math.floor(diffSeconds)} ${Math.floor(diffSeconds) === 1 ? "secondo" : "secondi"}${isFuture ? "" : " fa"} (${isToday ? `oggi alle ${hours24}:${minutesTime}` : dateTimeString})`;
+      return `${prefix}${Math.floor(diffSeconds)} ${Math.floor(diffSeconds) === 1 ? "secondo" : "secondi"}${isFuture ? "" : " fa"} (${isToday ? `oggi alle ${hours24}:${minutesTime}` : dateTimeString})`;
     } else if (isToday) {
-        const totalMinutes = Math.floor(diffSeconds / 60);
-        const hours = Math.floor(totalMinutes / 60);
-        const minutes = totalMinutes % 60;
-        if (hours > 0) {
-            if (minutes > 0) {
-                return `${prefix}${hours} ${hours === 1 ? "ora" : "ore"} e ${minutes} ${minutes === 1 ? "minuto" : "minuti"}${isFuture ? "" : " fa"} (oggi alle ${hours24}:${minutesTime})`;
-            }
-            return `${prefix}${hours} ${hours === 1 ? "ora" : "ore"}${isFuture ? "" : " fa"} (oggi alle ${hours24}:${minutesTime})`;
-        } else {
-            return `${prefix}${totalMinutes} ${totalMinutes === 1 ? "minuto" : "minuti"}${isFuture ? "" : " fa"} (oggi alle ${hours24}:${minutesTime})`;
+      const totalMinutes = Math.floor(diffSeconds / 60);
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
+      if (hours > 0) {
+        if (minutes > 0) {
+          return `${prefix}${hours} ${hours === 1 ? "ora" : "ore"} e ${minutes} ${minutes === 1 ? "minuto" : "minuti"}${isFuture ? "" : " fa"} (oggi alle ${hours24}:${minutesTime})`;
         }
+        return `${prefix}${hours} ${hours === 1 ? "ora" : "ore"}${isFuture ? "" : " fa"} (oggi alle ${hours24}:${minutesTime})`;
+      } else {
+        return `${prefix}${totalMinutes} ${totalMinutes === 1 ? "minuto" : "minuti"}${isFuture ? "" : " fa"} (oggi alle ${hours24}:${minutesTime})`;
+      }
     } else if (isYesterday) {
-        return `${prefix}ieri alle ${hours24}:${minutesTime}`;
+      return `${prefix}ieri alle ${hours24}:${minutesTime}`;
     } else if (diffDays < 7) {
-        return `${prefix}${diffDays} ${diffDays === 1 ? "giorno" : "giorni"}${isFuture ? "" : " fa"} (${dateTimeString})`;
+      return `${prefix}${diffDays} ${diffDays === 1 ? "giorno" : "giorni"}${isFuture ? "" : " fa"} (${dateTimeString})`;
     } else if (months < 1) {
-        const weeks = Math.floor(diffDays / 7);
-        return `${prefix}${weeks} ${weeks === 1 ? "settimana" : "settimane"}${isFuture ? "" : " fa"} (${dateTimeString})`;
+      const weeks = Math.floor(diffDays / 7);
+      return `${prefix}${weeks} ${weeks === 1 ? "settimana" : "settimane"}${isFuture ? "" : " fa"} (${dateTimeString})`;
     } else if (years < 1) {
-        return `${prefix}${months} ${months === 1 ? "mese" : "mesi"}${isFuture ? "" : " fa"} (${dateTimeString})`;
+      return `${prefix}${months} ${months === 1 ? "mese" : "mesi"}${isFuture ? "" : " fa"} (${dateTimeString})`;
     } else {
-        return `${prefix}${years} ${years === 1 ? "anno" : "anni"}${isFuture ? "" : " fa"} (${dateTimeString})`;
+      return `${prefix}${years} ${years === 1 ? "anno" : "anni"}${isFuture ? "" : " fa"} (${dateTimeString})`;
     }
-};
-  // Custom source icon component
+  };
+
   const SourceIcon = ({ source }) => {
     const domain = getDomainFromUrl(source);
     const favicon = getFavicon(source);
     const firstLetter = domain.charAt(0).toUpperCase();
-    
+
     return (
       <div className="relative">
         <div className="bg-green-500 text-white p-1.5 rounded text-sm font-medium min-w-[28px] h-[28px] text-center flex items-center justify-center overflow-hidden">
-          <img 
-            src={favicon} 
+          <img
+            src={favicon}
             alt={domain}
             className="w-full h-full object-cover"
             onError={(e) => {
@@ -325,7 +253,6 @@ export default function DigiNews() {
     );
   };
 
-  // Render content based on loading, error, or data state
   const renderContent = () => {
     if (isLoading) {
       return <DigiNewsSkeleton />;
@@ -351,7 +278,7 @@ export default function DigiNews() {
           <button
             onClick={handleClearAll}
             className="px-4 py-2 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors"
-            aria-label="Cancella tutti i filtri"
+            aria-label="Cancella tutti i filtri e la ricerca"
           >
             Cancella tutto
           </button>
@@ -364,8 +291,7 @@ export default function DigiNews() {
         <div className="sr-only" role="status" aria-live="polite">
           {filteredData.length} articoli trovati
         </div>
-        
-        {/* Show debugging info in dev environment */}
+
         {process.env.NODE_ENV === 'development' && debugInfo && (
           <div className="p-4 bg-gray-100 rounded-lg mb-4 text-xs overflow-auto max-h-40">
             <details>
@@ -374,7 +300,7 @@ export default function DigiNews() {
             </details>
           </div>
         )}
-        
+
         {filteredData.map((item, index) => (
           <article
             key={`${item.id || index}-${item.pubDate || 'no-date'}`}
@@ -382,7 +308,6 @@ export default function DigiNews() {
           >
             <div className="flex items-start gap-3">
               <SourceIcon source={item.source} />
-
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium mb-1 truncate">
                   {getDomainFromUrl(item.source)}
@@ -399,23 +324,24 @@ export default function DigiNews() {
 
               {!item.isPublished && (
                 <div className="flex gap-2">
-                  <Link 
-                    href={`/news/${item.id}`} 
+                  <Link
+                    href={`/news/${item.id}`}
                     className="bg-green-400 p-1.5 rounded-lg"
                     aria-label={`Modifica articolo: ${item.title}`}
                   >
                     <PenSquare className="h-4 w-4 text-white" aria-hidden="true" />
                   </Link>
                   <button
-                  onClick={async (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const response = await axios.post('/api/favorite', {
-                      source: item.source
-                    });                 
-                    toast(response.data.message, { duration: 3000, position: 'bottom-right', style: { backgroundColor: '#34C759', color: 'white' } });
-
-                  }}
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const response = await axios.post('/api/favorite', { source: item.source });
+                      toast(response.data.message, { 
+                        duration: 3000, 
+                        position: 'bottom-right', 
+                        style: { backgroundColor: '#34C759', color: 'white' } 
+                      });
+                    }}
                     className="bg-yellow-400 hover:bg-yellow-500 p-1.5 rounded-lg transition-colors cursor-pointer"
                     aria-label="Subscribe to notifications from this source"
                   >
@@ -430,12 +356,11 @@ export default function DigiNews() {
                 Pubblicata
               </span>
             )}
-            
           </article>
         ))}
-        
+
         {allData.length > 0 && (
-          <button 
+          <button
             onClick={handleLoadMore}
             disabled={isLoadingMore}
             className="w-full mt-4 px-6 py-3 bg-green-400 hover:bg-green-500 text-white font-medium rounded-lg shadow-md hover:from-blue-600 hover:to-blue-700 transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
@@ -482,7 +407,7 @@ export default function DigiNews() {
               </button>
             )}
           </div>
-          
+
           <div className="flex items-center gap-4">
             <button
               onClick={() => setIsFilterOpen(true)}
@@ -498,92 +423,63 @@ export default function DigiNews() {
                 </span>
               )}
             </button>
-            
+
+            {activeFilters.length > 0 && (
+              <button
+                onClick={handleClearFilters}
+                className="p-3 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2 border border-gray-200 text-red-600"
+                aria-label="Cancella tutti i filtri"
+              >
+                <XCircle className="h-5 w-5" aria-hidden="true" />
+                <span className="text-sm font-medium">Cancella Filtri</span>
+              </button>
+            )}
+
             {authToken ? (
-              <div className="flex items-center gap-4">
-              {authToken ? (
-                <div className="flex items-center space-x-3 bg-blue-50/70 p-2.5 rounded-xl border border-blue-100 shadow-sm">
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium text-blue-700 truncate max-w-[150px]">
-                      {userEmail}
-                    </span>
-                    <div className="flex space-x-2 mt-1.5">
-                      <Link
-                        href="/dashboard"
-                        className="group flex items-center justify-center 
-                          bg-blue-500 text-white px-3 py-1.5 rounded-lg 
-                          hover:bg-blue-600 transition-all duration-300 
-                          text-xs font-semibold tracking-tight
-                          focus:outline-none focus:ring-2 focus:ring-blue-400"
-                      >
-                        <ArrowLeft className="h-4 w-4 mr-1.5 group-hover:animate-pulse" aria-hidden="true" />
-                        Dashboard
-                      </Link>
-                      <Link
-                        href="/settings"
-                        className="group flex items-center justify-center 
-                          border border-blue-500 text-blue-600 
-                          px-3 py-1.5 rounded-lg 
-                          hover:bg-blue-50 transition-all duration-300 
-                          text-xs font-semibold tracking-tight
-                          focus:outline-none focus:ring-2 focus:ring-blue-300"
-                      >
-                        <Cog className="h-4 w-4 mr-1.5 group-hover:rotate-45 transition-transform" aria-hidden="true" />
-                        Settings
-                      </Link>
-                    </div>
+              <div className="flex items-center space-x-3 bg-blue-50/70 p-2.5 rounded-xl border border-blue-100 shadow-sm">
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-blue-700 truncate max-w-[150px]">
+                    {userEmail}
+                  </span>
+                  <div className="flex space-x-2 mt-1.5">
+                    <Link
+                      href="/dashboard"
+                      className="group flex items-center justify-center bg-blue-500 text-white px-3 py-1.5 rounded-lg hover:bg-blue-600 transition-all duration-300 text-xs font-semibold tracking-tight focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    >
+                      <ArrowLeft className="h-4 w-4 mr-1.5 group-hover:animate-pulse" aria-hidden="true" />
+                      Dashboard
+                    </Link>
+                    <Link
+                      href="/settings"
+                      className="group flex items-center justify-center border border-blue-500 text-blue-600 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-all duration-300 text-xs font-semibold tracking-tight focus:outline-none focus:ring-2 focus:ring-blue-300"
+                    >
+                      <Cog className="h-4 w-4 mr-1.5 group-hover:rotate-45 transition-transform" aria-hidden="true" />
+                      Settings
+                    </Link>
                   </div>
-                  <button 
-                    // onClick={handleLogout}
-                    className="hover:bg-red-50 p-1.5 rounded-full group"
-                    aria-label="Logout"
-                  >
-                    <LogOut 
-                      className="h-5 w-5 text-gray-500 group-hover:text-red-500 transition-colors" 
-                      aria-hidden="true" 
-                    />
-                  </button>
                 </div>
-              ) : (
-                <div className="flex items-center space-x-3">
-                  <Link
-                    href="/sign-in"
-                    className="flex items-center justify-center 
-                      border border-blue-500 text-blue-600
-                      px-4 py-2 rounded-lg 
-                      hover:bg-blue-50 transition-colors 
-                      text-sm font-medium"
-                  >
-                    Accedi
-                  </Link>
-                  <Link
-                    href="/settings"
-                    className="flex items-center justify-center 
-                      bg-blue-500 text-white 
-                      px-4 py-2 rounded-lg 
-                      hover:bg-blue-600 transition-colors 
-                      text-sm font-medium"
-                  >
-                    Settings
-                  </Link>
-                </div>
-              )}
-            </div>
+                <button
+                  className="hover:bg-red-50 p-1.5 rounded-full group"
+                  aria-label="Logout"
+                >
+                  <LogOut className="h-5 w-5 text-gray-500 group-hover:text-red-500 transition-colors" aria-hidden="true" />
+                </button>
+              </div>
             ) : (
-              <>
+              <div className="flex items-center space-x-3">
                 <Link
-                href="/sign-in"
-                className="flex items-center justify-center border border-blue-500 px-4 py-2 rounded-lg hover:bg-blue-500 hover:text-white transition-colors text-sm font-medium"
-              >
-                Accedi
-              </Link>
-              <Link
-                href="/settings"
-                className="flex items-center justify-center bg-blue-500 border border-blue-500 px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium text-white"
-              >
-                Settings
-              </Link>
-              </>
+                  href="/sign-in"
+                  className="flex items-center justify-center border border-blue-500 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium"
+                >
+                  Accedi
+                </Link>
+                <Link
+                  href="/settings"
+                  className="flex items-center justify-center bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium"
+                >
+                  Settings
+                </Link>
+              </div>
             )}
           </div>
         </div>
@@ -597,12 +493,12 @@ export default function DigiNews() {
         <FilterModal
           isOpen={isFilterOpen}
           onClose={() => setIsFilterOpen(false)}
-          initialFilters={activeFilters.map(f => typeof f === 'object' ? f.value : f)} // Handle both object and string filters
+          initialFilters={activeFilters.map(f => typeof f === 'object' ? f.value : f)}
           onApply={(filters) => {
             console.log("Received filters from modal:", filters);
             setActiveFilters(filters);
           }}
-          currentData={allData} // Make sure this is your full dataset
+          allSources={staticSources}
         />
       )}
     </main>
