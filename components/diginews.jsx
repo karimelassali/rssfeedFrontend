@@ -1,4 +1,4 @@
-"use client"; // Add this if using Next.js App Router
+"use client"; // For Next.js App Router
 
 import { useState, useEffect } from "react";
 import { Search, Filter, XCircle, X, PenSquare, Loader2, ChevronDown, Star } from "lucide-react";
@@ -29,6 +29,7 @@ export default function DigiNews() {
   const [userEmail, setUserEmail] = useState(null);
   const [debugInfo, setDebugInfo] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false); // New state for user menu
 
 
   const staticSources = [
@@ -159,6 +160,10 @@ export default function DigiNews() {
       style: { backgroundColor: '#34C759', color: 'white' }
     });
     window.location.href = '/sign-in';
+  };
+
+  const toggleUserMenu = () => {
+    setIsUserMenuOpen(prev => !prev);
   };
 
   const getDomainFromUrl = (url) => {
@@ -402,38 +407,38 @@ export default function DigiNews() {
     <main className="container mx-auto px-4 py-8 pb-20 relative min-h-screen bg-gray-50">
       <Toaster />
       <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex items-center justify-between gap-4 mb-8 sticky top-0 bg-white z-10 p-4 rounded-xl shadow-lg border border-gray-100 backdrop-blur-md bg-opacity-90">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8 sticky top-0 bg-white z-10 p-4 md:p-6 rounded-xl shadow-lg border border-gray-100 backdrop-blur-md bg-opacity-90">
           {/* Search Bar */}
-          <div className="relative flex-1">
+          <div className="relative w-full md:flex-1">
             <input
               type="search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cerca articoli..."
-              className="w-full pl-12 pr-12 py-3 bg-white bg-opacity-70 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all duration-300 shadow-md hover:shadow-lg text-lg font-medium"
+              className="w-full pl-12 pr-12 py-3 md:py-4 bg-white bg-opacity-70 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all duration-300 shadow-md hover:shadow-lg text-base md:text-lg font-medium"
               aria-label="Cerca articoli"
             />
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-6 w-6 text-gray-500" aria-hidden="true" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 md:h-6 w-5 md:w-6 text-gray-500" aria-hidden="true" />
             {searchQuery && (
               <button
                 onClick={handleClearSearch}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-red-500 transition-colors duration-200"
                 aria-label="Cancella ricerca"
               >
-                <X className="h-6 w-6" aria-hidden="true" />
+                <X className="h-5 md:h-6 w-5 md:w-6" aria-hidden="true" />
               </button>
             )}
           </div>
 
           {/* Filter and Clear Filters Buttons */}
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3 mt-3 md:mt-0">
             <button
               onClick={() => setIsFilterOpen(true)}
-              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400"
+              className="flex items-center gap-2 px-4 py-2 md:px-5 md:py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400"
               aria-label="Apri filtri"
               aria-expanded={isFilterOpen}
             >
-              <Filter className="h-5 w-5" aria-hidden="true" />
+              <Filter className="h-4 md:h-5 w-4 md:w-5" aria-hidden="true" />
               <span className="text-sm font-semibold">Filtri</span>
               {activeFilters.length > 0 && (
                 <span className="bg-white text-green-600 text-xs px-2 py-1 rounded-full shadow-sm">
@@ -445,10 +450,10 @@ export default function DigiNews() {
             {activeFilters.length > 0 && (
               <button
                 onClick={handleClearFilters}
-                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-gray-200 to-gray-300 text-gray-700 rounded-xl hover:from-gray-300 hover:to-gray-400 transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
+                className="flex items-center gap-2 px-4 py-2 md:px-5 md:py-2.5 bg-gradient-to-r from-gray-200 to-gray-300 text-gray-700 rounded-xl hover:from-gray-300 hover:to-gray-400 transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
                 aria-label="Cancella tutti i filtri"
               >
-                <XCircle className="h-5 w-5" aria-hidden="true" />
+                <XCircle className="h-4 md:h-5 w-4 md:w-5" aria-hidden="true" />
                 <span className="text-sm font-semibold">Cancella</span>
               </button>
             )}
@@ -456,15 +461,20 @@ export default function DigiNews() {
 
           {/* User Data */}
           {authToken ? (
-            <div className="flex items-center gap-2">
-              <div className="group relative bg-blue-50 border border-blue-200 rounded-xl px-4 py-2.5 shadow-md hover:shadow-lg transition-all duration-300">
-                <span className="text-sm font-semibold text-blue-700 truncate max-w-[150px]">
-                  {userEmail}
-                </span>
-                <div className="absolute right-0 top-full mt-2 hidden group-hover:flex flex-col gap-2 bg-white border border-gray-200 rounded-lg shadow-xl p-2 w-48 z-20">
+            <div className="relative flex items-center gap-2 mt-3 md:mt-0">
+              <button
+                onClick={toggleUserMenu}
+                className="bg-green-50 border border-green-200 rounded-xl px-4 py-2.5 shadow-md hover:shadow-lg transition-all duration-300 text-green-600 font-semibold text-sm truncate max-w-[150px] hover:underline focus:outline-none focus:ring-2 focus:ring-green-400"
+                aria-label="Opzioni utente"
+                aria-expanded={isUserMenuOpen}
+              >
+                {userEmail}
+              </button>
+              {isUserMenuOpen && (
+                <div className="absolute right-0 top-full mt-2 flex flex-col gap-2 bg-white border border-gray-200 rounded-lg shadow-xl p-2 w-48 z-20 md:w-56">
                   <Link
                     href="/dashboard"
-                    className="flex items-center gap-2 px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-md transition-colors duration-200 text-sm font-medium"
+                    className="flex items-center gap-2 px-3 py-2 text-green-600 hover:bg-green-50 rounded-md transition-colors duration-200 text-sm font-medium"
                     aria-label="Vai al dashboard"
                   >
                     <ArrowLeft className="h-4 w-4" aria-hidden="true" />
@@ -472,34 +482,34 @@ export default function DigiNews() {
                   </Link>
                   <Link
                     href="/settings"
-                    className="flex items-center gap-2 px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-md transition-colors duration-200 text-sm font-medium"
+                    className="flex items-center gap-2 px-3 py-2 text-green-600 hover:bg-green-50 rounded-md transition-colors duration-200 text-sm font-medium"
                     aria-label="Vai alle impostazioni"
                   >
                     <Cog className="h-4 w-4" aria-hidden="true" />
                     Impostazioni
                   </Link>
                 </div>
-              </div>
+              )}
               <button
                 onClick={handleLogout}
-                className="p-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-md hover:shadow-lg"
+                className="p-2 md:p-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-md hover:shadow-lg"
                 aria-label="Logout"
               >
-                <LogOut className="h-5 w-5" aria-hidden="true" />
+                <LogOut className="h-4 md:h-5 w-4 md:w-5" aria-hidden="true" />
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3 mt-3 md:mt-0">
               <Link
                 href="/sign-in"
-                className="px-5 py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-300 text-sm font-semibold shadow-md hover:shadow-lg"
+                className="px-4 py-2 md:px-5 md:py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-300 text-sm font-semibold shadow-md hover:shadow-lg"
                 aria-label="Accedi"
               >
                 Accedi
               </Link>
               <Link
                 href="/settings"
-                className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-300 text-sm font-semibold shadow-md hover:shadow-lg"
+                className="px-4 py-2 md:px-5 md:py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-300 text-sm font-semibold shadow-md hover:shadow-lg"
                 aria-label="Impostazioni"
               >
                 Impostazioni
