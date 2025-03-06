@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import Link from "next/link"
 
 // Define our color scheme
 const colors = {
@@ -29,7 +30,7 @@ const samplePosts = [
   {
     id: "1",
     title: "10 Tips for Better Content Marketing",
-    excerpt: "Learn how to improve your content marketing strategy with these expert tips.",
+    description: "Learn how to improve your content marketing strategy with these expert tips.",
     publishDate: "2023-10-15",
     status: "published",
     image: "https://imgs.search.brave.com/CFoRBLlcAtS1HK3P3N1exBlQGBpxtkNK1f-BqJVLE9o/rs:fit:500:0:0:0/g:ce/aHR0cHM6Ly9keWwz/NDdoaXd2M2N0LmNs/b3VkZnJvbnQubmV0/L2FwcC91cGxvYWRz/LzIwMjUvMDIvSU1H/Mi1zY2FsZWQuanBn",
@@ -38,7 +39,7 @@ const samplePosts = [
   {
     id: "2",
     title: "The Future of AI in Journalism",
-    excerpt: "Exploring how artificial intelligence is transforming the journalism industry.",
+    description: "Exploring how artificial intelligence is transforming the journalism industry.",
     publishDate: "2023-10-20",
     status: "published",
     image: "https://imgs.search.brave.com/CFoRBLlcAtS1HK3P3N1exBlQGBpxtkNK1f-BqJVLE9o/rs:fit:500:0:0:0/g:ce/aHR0cHM6Ly9keWwz/NDdoaXd2M2N0LmNs/b3VkZnJvbnQubmV0/L2FwcC91cGxvYWRz/LzIwMjUvMDIvSU1H/Mi1zY2FsZWQuanBn",
@@ -47,7 +48,7 @@ const samplePosts = [
   {
     id: "3",
     title: "Understanding Web3 and Blockchain",
-    excerpt: "A comprehensive guide to understanding Web3 technologies and blockchain.",
+    description: "A comprehensive guide to understanding Web3 technologies and blockchain.",
     publishDate: "2023-10-25",
     status: "scheduled",
     image: "https://imgs.search.brave.com/CFoRBLlcAtS1HK3P3N1exBlQGBpxtkNK1f-BqJVLE9o/rs:fit:500:0:0:0/g:ce/aHR0cHM6Ly9keWwz/NDdoaXd2M2N0LmNs/b3VkZnJvbnQubmV0/L2FwcC91cGxvYWRz/LzIwMjUvMDIvSU1H/Mi1zY2FsZWQuanBn",
@@ -56,7 +57,7 @@ const samplePosts = [
   {
     id: "4",
     title: "Social Media Trends for 2024",
-    excerpt: "Stay ahead of the curve with these predicted social media trends for next year.",
+    description: "Stay ahead of the curve with these predicted social media trends for next year.",
     publishDate: "2023-11-01",
     status: "scheduled",
     image: "https://imgs.search.brave.com/CFoRBLlcAtS1HK3P3N1exBlQGBpxtkNK1f-BqJVLE9o/rs:fit:500:0:0:0/g:ce/aHR0cHM6Ly9keWwz/NDdoaXd2M2N0LmNs/b3VkZnJvbnQubmV0/L2FwcC91cGxvYWRz/LzIwMjUvMDIvSU1H/Mi1zY2FsZWQuanBn",
@@ -65,7 +66,7 @@ const samplePosts = [
   {
     id: "5",
     title: "How to Optimize Your SEO Strategy",
-    excerpt: "Failed to publish due to missing metadata.",
+    description: "Failed to publish due to missing metadata.",
     publishDate: "2023-10-10",
     status: "failed",
     image: "https://imgs.search.brave.com/CFoRBLlcAtS1HK3P3N1exBlQGBpxtkNK1f-BqJVLE9o/rs:fit:500:0:0:0/g:ce/aHR0cHM6Ly9keWwz/NDdoaXd2M2N0LmNs/b3VkZnJvbnQubmV0/L2FwcC91cGxvYWRz/LzIwMjUvMDIvSU1H/Mi1zY2FsZWQuanBn",
@@ -81,6 +82,7 @@ export default function Dashboard({ isHomepage = true }) {
   const [isLoading, setIsLoading] = useState(true)
   const [draggedItem, setDraggedItem] = useState(null)
   const [draggedOverItem, setDraggedOverItem] = useState(null)
+  
 
 
   useEffect(() => {
@@ -116,7 +118,7 @@ export default function Dashboard({ isHomepage = true }) {
       result = result.filter(
         (post) =>
           post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          post.excerpt.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          post.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
           post.category.toLowerCase().includes(searchTerm.toLowerCase()),
       )
     }
@@ -240,7 +242,7 @@ export default function Dashboard({ isHomepage = true }) {
             </div>
 
             <h3 className="text-lg font-semibold mb-2">{post.title}</h3>
-            <p className="text-muted-foreground text-sm mb-4 flex-1">{post.excerpt}</p>
+            <p className="text-muted-foreground text-sm mb-4 flex-1">{post.description}</p>
 
             <div className="flex justify-between items-center mt-auto pt-4 border-t">
               <Badge variant="outline" className="bg-[#F5F6F7]">
@@ -333,9 +335,9 @@ export default function Dashboard({ isHomepage = true }) {
             <p className="text-muted-foreground mt-1">Manage and monitor all your published content</p>
           </div>
           {isHomepage && (
-            <Button className="bg-[#22C55E] hover:bg-[#22C55E]/90 text-white">
-              <Plus className="mr-2 h-4 w-4" /> Create New Post
-            </Button>
+            <Link href="/" className="bg-[#22C55E] p-2 flex items-center justify-center rounded-md hover:bg-[#22C55E]/90 text-white">
+              <Plus className="mr-2 h-4 w-4" /> Publish new post
+            </Link>
           )}
         </div>
 
