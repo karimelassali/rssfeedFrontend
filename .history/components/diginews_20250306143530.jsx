@@ -27,8 +27,8 @@ export default function DigiNews() {
   const [userData, setUserData] = useState(null);
   const [userEmail, setUserEmail] = useState(null);
   const [debugInfo, setDebugInfo] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [lastPage, setLastPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1); // Start at page 1
+  const [lastPage, setLastPage] = useState(1); // Track last page from API
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   const staticSources = [
@@ -88,19 +88,14 @@ export default function DigiNews() {
     else setIsLoading(true);
 
     try {
-      const response = await axios.get(`/api/articles`, {
-        params: {
-          page,
-          pageSize: 10,
-          activeFilters: JSON.stringify(activeFilters),
-          search: searchQuery || undefined,
-        },
+      const response = await axios.get(`/api/articles?page=${page}`, {
+        params: { activeFilters: JSON.stringify(activeFilters) },
       });
 
       console.log("API Response:", response.data);
       setDebugInfo({ responseData: response.data, page });
 
-      const { data, current_page, last_page } = response.data;
+      const { data, current_page, last_page } = response.data; // Expect Laravel paginated response
       const newData = Array.isArray(data) ? data : [];
       const filteredNewData = newData.filter(item =>
         item.source && typeof item.source === 'string' && item.source.startsWith('https://')
@@ -131,8 +126,8 @@ export default function DigiNews() {
   };
 
   useEffect(() => {
-    fetchData(1, false); // Reset to page 1 on filter or search change
-  }, [activeFilters, searchQuery]);
+    fetchData(1, false); // Reset to page 1 on filter change
+  }, [activeFilters]);
 
   const handleClearAll = () => {
     setActiveFilters([]);
@@ -407,6 +402,7 @@ export default function DigiNews() {
       <Toaster />
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8 sticky top-0 bg-white z-10 p-4 md:p-6 rounded-xl shadow-lg border border-gray-100 backdrop-blur-md bg-opacity-90">
+          {/* Search Bar */}
           <div className="relative w-full md:flex-1">
             <input
               type="search"
@@ -428,6 +424,7 @@ export default function DigiNews() {
             )}
           </div>
 
+          {/* Filter and Clear Filters Buttons */}
           <div className="flex flex-wrap items-center gap-3 mt-3 md:mt-0">
             <button
               onClick={() => setIsFilterOpen(true)}
@@ -456,6 +453,7 @@ export default function DigiNews() {
             )}
           </div>
 
+          {/* User Data */}
           {authToken ? (
             <div className="relative flex items-center gap-2 mt-3 md:mt-0">
               <button
@@ -533,4 +531,4 @@ export default function DigiNews() {
       )}
     </main>
   );
-}
+}   
