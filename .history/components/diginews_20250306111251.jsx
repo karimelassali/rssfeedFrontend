@@ -147,6 +147,8 @@ export default function DigiNews() {
     setCurrentPage(nextPage);
     fetchData(nextPage, true);
   };
+
+
   const handleLogout = () => {
     Cookies.remove('authToken');
     Cookies.remove('user');

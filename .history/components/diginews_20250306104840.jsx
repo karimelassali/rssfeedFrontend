@@ -28,7 +28,7 @@ export default function DigiNews() {
   const [userData, setUserData] = useState(null);
   const [userEmail, setUserEmail] = useState(null);
   const [debugInfo, setDebugInfo] = useState(null);
-  const [currentPage, setCurrentPage] = useState(3);
+  const [currentPage, setCurrentPage] = useState(1);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false); // New state for user menu
 
 
@@ -147,6 +147,9 @@ export default function DigiNews() {
     setCurrentPage(nextPage);
     fetchData(nextPage, true);
   };
+
+
+  
   const handleLogout = () => {
     Cookies.remove('authToken');
     Cookies.remove('user');
