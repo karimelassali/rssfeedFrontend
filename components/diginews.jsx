@@ -1,3 +1,5 @@
+"use client"; // Add this if using Next.js App Router
+
 import { useState, useEffect } from "react";
 import { Search, Filter, XCircle, X, PenSquare, Loader2, ChevronDown, Star } from "lucide-react";
 import axios from "axios";
@@ -28,7 +30,7 @@ export default function DigiNews() {
   const [debugInfo, setDebugInfo] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Static list of sources
+
   const staticSources = [
     'https://appweb.regione.vda.it/DBWeb/Comunicati.nsf/RSScomunicati.xml',
     'https://www.ansa.it/valledaosta/notizie/valledaosta_rss.xml',
@@ -136,13 +138,27 @@ export default function DigiNews() {
   };
 
   const handleClearFilters = () => {
-    setActiveFilters([]); // Clear all filters to show normal data
+    setActiveFilters([]);
   };
 
   const handleLoadMore = () => {
     const nextPage = currentPage + 1;
     setCurrentPage(nextPage);
     fetchData(nextPage, true);
+  };
+
+  const handleLogout = () => {
+    Cookies.remove('authToken');
+    Cookies.remove('user');
+    setAuthToken(null);
+    setUserData(null);
+    setUserEmail(null);
+    toast.success("Logout effettuato con successo", {
+      position: "bottom-right",
+      duration: 3000,
+      style: { backgroundColor: '#34C759', color: 'white' }
+    });
+    window.location.href = '/sign-in';
   };
 
   const getDomainFromUrl = (url) => {
@@ -363,7 +379,7 @@ export default function DigiNews() {
           <button
             onClick={handleLoadMore}
             disabled={isLoadingMore}
-            className="w-full mt-4 px-6 py-3 bg-green-400 hover:bg-green-500 text-white font-medium rounded-lg shadow-md hover:from-blue-600 hover:to-blue-700 transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
+            className="w-full mt-4 px-6 py-3 bg-gradient-to-r from-green-400 to-green-500 text-white font-medium rounded-lg shadow-md hover:from-green-500 hover:to-green-600 transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
           >
             {isLoadingMore ? (
               <>
@@ -386,39 +402,41 @@ export default function DigiNews() {
     <main className="container mx-auto px-4 py-8 pb-20 relative min-h-screen bg-gray-50">
       <Toaster />
       <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex flex-col md:flex-row items-center gap-4 mb-8 sticky top-0 bg-white z-10 p-4 rounded-lg shadow-sm">
-          <div className="relative flex-1 w-full">
+        <div className="flex items-center justify-between gap-4 mb-8 sticky top-0 bg-white z-10 p-4 rounded-xl shadow-lg border border-gray-100 backdrop-blur-md bg-opacity-90">
+          {/* Search Bar */}
+          <div className="relative flex-1">
             <input
               type="search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cerca articoli..."
-              className="w-full pl-10 pr-12 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
+              className="w-full pl-12 pr-12 py-3 bg-white bg-opacity-70 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all duration-300 shadow-md hover:shadow-lg text-lg font-medium"
               aria-label="Cerca articoli"
             />
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" aria-hidden="true" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-6 w-6 text-gray-500" aria-hidden="true" />
             {searchQuery && (
               <button
                 onClick={handleClearSearch}
-                className="absolute right-3 top-1/2 -translate-y-1/2 hover:text-gray-600"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-red-500 transition-colors duration-200"
                 aria-label="Cancella ricerca"
               >
-                <X className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                <X className="h-6 w-6" aria-hidden="true" />
               </button>
             )}
           </div>
 
-          <div className="flex items-center gap-4">
+          {/* Filter and Clear Filters Buttons */}
+          <div className="flex items-center gap-3">
             <button
               onClick={() => setIsFilterOpen(true)}
-              className="p-3 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2 border border-gray-200"
+              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400"
               aria-label="Apri filtri"
               aria-expanded={isFilterOpen}
             >
               <Filter className="h-5 w-5" aria-hidden="true" />
-              <span className="text-sm font-medium">Filtri</span>
+              <span className="text-sm font-semibold">Filtri</span>
               {activeFilters.length > 0 && (
-                <span className="bg-green-500 text-white text-xs px-2 py-0.5 rounded-full">
+                <span className="bg-white text-green-600 text-xs px-2 py-1 rounded-full shadow-sm">
                   {activeFilters.length}
                 </span>
               )}
@@ -427,64 +445,70 @@ export default function DigiNews() {
             {activeFilters.length > 0 && (
               <button
                 onClick={handleClearFilters}
-                className="p-3 hover:bg-gray-100 rounded-lg transition-colors flex items-center gap-2 border border-gray-200 text-red-600"
+                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-gray-200 to-gray-300 text-gray-700 rounded-xl hover:from-gray-300 hover:to-gray-400 transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
                 aria-label="Cancella tutti i filtri"
               >
                 <XCircle className="h-5 w-5" aria-hidden="true" />
-                <span className="text-sm font-medium">Cancella Filtri</span>
+                <span className="text-sm font-semibold">Cancella</span>
               </button>
             )}
-
-            {authToken ? (
-              <div className="flex items-center space-x-3 bg-blue-50/70 p-2.5 rounded-xl border border-blue-100 shadow-sm">
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium text-blue-700 truncate max-w-[150px]">
-                    {userEmail}
-                  </span>
-                  <div className="flex space-x-2 mt-1.5">
-                    <Link
-                      href="/dashboard"
-                      className="group flex items-center justify-center bg-blue-500 text-white px-3 py-1.5 rounded-lg hover:bg-blue-600 transition-all duration-300 text-xs font-semibold tracking-tight focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    >
-                      <ArrowLeft className="h-4 w-4 mr-1.5 group-hover:animate-pulse" aria-hidden="true" />
-                      Dashboard
-                    </Link>
-                    <Link
-                      href="/settings"
-                      className="group flex items-center justify-center border border-blue-500 text-blue-600 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-all duration-300 text-xs font-semibold tracking-tight focus:outline-none focus:ring-2 focus:ring-blue-300"
-                    >
-                      <Cog className="h-4 w-4 mr-1.5 group-hover:rotate-45 transition-transform" aria-hidden="true" />
-                      Settings
-                    </Link>
-                  </div>
-                </div>
-                <button
-                  className="hover:bg-red-50 p-1.5 rounded-full group"
-                  aria-label="Logout"
-                >
-                  <LogOut className="h-5 w-5 text-gray-500 group-hover:text-red-500 transition-colors" aria-hidden="true" />
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center space-x-3">
-                <Link
-                  href="/sign-in"
-                  className="flex items-center justify-center border border-blue-500 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium"
-                >
-                  Accedi
-                </Link>
-                <Link
-                  href="/settings"
-                  className="flex items-center justify-center bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium"
-                >
-                  Settings
-                </Link>
-              </div>
-            )}
           </div>
+
+          {/* User Data */}
+          {authToken ? (
+            <div className="flex items-center gap-2">
+              <div className="group relative bg-blue-50 border border-blue-200 rounded-xl px-4 py-2.5 shadow-md hover:shadow-lg transition-all duration-300">
+                <span className="text-sm font-semibold text-blue-700 truncate max-w-[150px]">
+                  {userEmail}
+                </span>
+                <div className="absolute right-0 top-full mt-2 hidden group-hover:flex flex-col gap-2 bg-white border border-gray-200 rounded-lg shadow-xl p-2 w-48 z-20">
+                  <Link
+                    href="/dashboard"
+                    className="flex items-center gap-2 px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-md transition-colors duration-200 text-sm font-medium"
+                    aria-label="Vai al dashboard"
+                  >
+                    <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                    Dashboard
+                  </Link>
+                  <Link
+                    href="/settings"
+                    className="flex items-center gap-2 px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-md transition-colors duration-200 text-sm font-medium"
+                    aria-label="Vai alle impostazioni"
+                  >
+                    <Cog className="h-4 w-4" aria-hidden="true" />
+                    Impostazioni
+                  </Link>
+                </div>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="p-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-md hover:shadow-lg"
+                aria-label="Logout"
+              >
+                <LogOut className="h-5 w-5" aria-hidden="true" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <Link
+                href="/sign-in"
+                className="px-5 py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-300 text-sm font-semibold shadow-md hover:shadow-lg"
+                aria-label="Accedi"
+              >
+                Accedi
+              </Link>
+              <Link
+                href="/settings"
+                className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-300 text-sm font-semibold shadow-md hover:shadow-lg"
+                aria-label="Impostazioni"
+              >
+                Impostazioni
+              </Link>
+            </div>
+          )}
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm p-4 overflow-y-auto">
+        <div className="bg-white rounded-xl shadow-sm p-6 overflow-y-auto">
           {renderContent()}
         </div>
       </div>
