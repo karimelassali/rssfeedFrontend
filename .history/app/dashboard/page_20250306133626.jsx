@@ -93,7 +93,7 @@ export default function Dashboard({ isHomepage = true }) {
     
     let result = [...posts]
 
-
+    
 
     // Filter by search term
     if (searchTerm) {
@@ -199,11 +199,7 @@ export default function Dashboard({ isHomepage = true }) {
           </Badge>
         )
       default:
-        return (
-          <Badge className="bg-[#22C55E] hover:bg-[#22C55E]/80 text-white flex items-center gap-1">
-            <CheckCircle className="w-3 h-3" /> Published
-          </Badge>
-        )
+        return null
     }
   }
 
