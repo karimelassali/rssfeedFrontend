@@ -360,7 +360,7 @@ export default function Dashboard({ isHomepage = true }) {
             <p className="text-muted-foreground mt-1">Manage and monitor all your published content</p>
           </div>
           {isHomepage && (
-            <Link href="/" className="bg-[#22C55E] p-2 flex items-center justify-center rounded-md hover:bg-[#22C55E]/90 text-white">
+            <Link href="/new-post" className="bg-[#22C55E] p-2 flex items-center justify-center rounded-md hover:bg-[#22C55E]/90 text-white">
               <Plus className="mr-2 h-4 w-4" /> Publish new post
             </Link>
           )}

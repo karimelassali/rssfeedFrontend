@@ -14,7 +14,7 @@ export async function POST(req) {
       );
     }
 
-    const prompt = `Summarize this article in a professional and structured way in italian. Extract the location and provide a clean and concise title. Remove unnecessary labels like "Title:" or "Location:". Format the response as follows without any special characters or symbols:
+    const prompt = `Summarize this article in a professional and structured way in. Extract the location and provide a clean and concise title. Remove unnecessary labels like "Title:" or "Location:". Format the response as follows without any special characters or symbols:
 
     - Title: [Your extracted title]
     - Location: [Extracted location]

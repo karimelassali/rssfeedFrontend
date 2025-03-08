@@ -303,7 +303,6 @@ export default function DigiNews() {
                     </button>
                   </div>
                 )}
-                
                 {item.isPublished === 1 && <span className="absolute top-2 right-2 bg-orange-100 text-orange-600 px-2 py-1 rounded text-xs">Pubblicata</span>}
               </div>
             </motion.article>
@@ -415,12 +414,12 @@ export default function DigiNews() {
                         <Link href="/dashboard" className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-green-50 rounded-md">
                           <ArrowLeft className="h-4 w-4" /> Dashboard
                         </Link>
-                        <Link href="/settings" className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-green-50 rounded-md">
+                        <Link href="/profile" className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-green-50 rounded-md">
                           <User className="h-4 w-4" /> Profilo
                         </Link>
-                        {/* <Link href="/notifications" className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-green-50 rounded-md">
+                        <Link href="/notifications" className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-green-50 rounded-md">
                           <Bell className="h-4 w-4" /> Notifiche
-                        </Link> */}
+                        </Link>
                         <Link href="/settings" className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-green-50 rounded-md">
                           <Cog className="h-4 w-4" /> Impostazioni
                         </Link>

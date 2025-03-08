@@ -36,20 +36,6 @@ export default function Dashboard({ isHomepage = true }) {
   const [draggedItem, setDraggedItem] = useState(null)
   const [draggedOverItem, setDraggedOverItem] = useState(null)
   
-  // Map API publishType values to UI display values
-  const mapPublishType = (type) => {
-    switch(type) {
-      case "now":
-        return "published";
-      case "schedule":
-        return "scheduled";
-      case "failed":
-        return "failed";
-      default:
-        return type;
-    }
-  }
-  
   // Fetch posts with error handling and loading states
   useEffect(() => {
     const controller = new AbortController()
@@ -73,16 +59,14 @@ export default function Dashboard({ isHomepage = true }) {
         
         const data = await response.json()
         
-        // Process the data with the actual structure
-        const processedPosts = data.data.map(post => ({
+        // Map status to publishType for all posts
+        const postsWithPublishType = data.data.map(post => ({
           ...post,
-          // Create a displayPublishType for UI rendering
-          displayPublishType: mapPublishType(post.publishType),
-          // Use scheduled time if available or fallback to date + time
-          publishDate: post.scheduledTime || `${post.date} ${post.time || ''}`
+          publishType: post.status, // Copy original status to publishType
+          status: undefined // Remove the status property
         }))
         
-        setPosts(processedPosts)
+        setPosts(postsWithPublishType)
       } catch (error) {
         if (error.name !== 'AbortError') {
           console.error('Error fetching posts:', error)
@@ -109,19 +93,21 @@ export default function Dashboard({ isHomepage = true }) {
     
     let result = [...posts]
 
+    
+
     // Filter by search term
     if (searchTerm) {
       result = result.filter(
         (post) =>
           post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (post.description && post.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          post.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
           post.category.toLowerCase().includes(searchTerm.toLowerCase()),
       )
     }
 
-    // Filter by publishType (using displayPublishType for UI matching)
+    // Filter by publishType
     if (activeTab !== "all") {
-      result = result.filter((post) => post.displayPublishType === activeTab)
+      result = result.filter((post) => post.publishType === activeTab)
     }
 
     setFilteredPosts(result)
@@ -129,7 +115,7 @@ export default function Dashboard({ isHomepage = true }) {
     // Set scheduled posts separately for reordering
     setScheduledPosts(
       posts
-        .filter((post) => post.displayPublishType === "scheduled")
+        .filter((post) => post.publishType === "scheduled")
         .sort((a, b) => new Date(a.publishDate) - new Date(b.publishDate)),
     )
   }, [searchTerm, activeTab, posts])
@@ -191,25 +177,9 @@ export default function Dashboard({ isHomepage = true }) {
     setDraggedOverItem(null);
   };
 
-  // Format the date for display
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      });
-    } catch (e) {
-      return dateString;
-    }
-  };
-
   // Status badge component with appropriate styling
-  const StatusBadge = ({ displayPublishType }) => {
-    switch (displayPublishType) {
+  const StatusBadge = ({ publishType }) => {
+    switch (publishType) {
       case "published":
         return (
           <Badge className="bg-[#22C55E] hover:bg-[#22C55E]/80 text-white flex items-center gap-1">
@@ -249,7 +219,7 @@ export default function Dashboard({ isHomepage = true }) {
 
           <div className="p-6 flex-1 flex flex-col">
             <div className="flex justify-between items-start mb-2">
-              <StatusBadge displayPublishType={post.displayPublishType} />
+              <StatusBadge publishType={post.publishType} />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -267,15 +237,15 @@ export default function Dashboard({ isHomepage = true }) {
             </div>
 
             <h3 className="text-lg font-semibold mb-2">{post.title}</h3>
-            <p className="text-muted-foreground text-sm mb-4 flex-1">{post.description || "No description available"}</p>
+            <p className="text-muted-foreground text-sm mb-4 flex-1">{post.description}</p>
 
             <div className="flex justify-between items-center mt-auto pt-4 border-t">
               <Badge variant="outline" className="bg-[#F5F6F7]">
                 {post.category}
               </Badge>
               <span className="text-xs text-muted-foreground">
-                {post.displayPublishType === "published" ? "Published" : post.displayPublishType === "scheduled" ? "Scheduled" : "Failed"} on{" "}
-                {formatDate(post.publishDate)}
+                {post.publishType === "published" ? "Published" : post.publishType === "scheduled" ? "Scheduled" : "Failed"} on{" "}
+                {post.publishDate}
               </span>
             </div>
           </div>
@@ -323,9 +293,9 @@ export default function Dashboard({ isHomepage = true }) {
               <div className="flex-1">
                 <h3 className="font-medium">{post.title}</h3>
                 <div className="flex items-center gap-2 mt-1">
-                  <StatusBadge displayPublishType={post.displayPublishType} />
+                  <StatusBadge publishType={post.publishType} />
                   <span className="text-xs text-muted-foreground">
-                    Scheduled for {formatDate(post.publishDate)}
+                    Scheduled for {post.publishDate}
                   </span>
                 </div>
               </div>
@@ -360,7 +330,7 @@ export default function Dashboard({ isHomepage = true }) {
             <p className="text-muted-foreground mt-1">Manage and monitor all your published content</p>
           </div>
           {isHomepage && (
-            <Link href="/" className="bg-[#22C55E] p-2 flex items-center justify-center rounded-md hover:bg-[#22C55E]/90 text-white">
+            <Link href="/new-post" className="bg-[#22C55E] p-2 flex items-center justify-center rounded-md hover:bg-[#22C55E]/90 text-white">
               <Plus className="mr-2 h-4 w-4" /> Publish new post
             </Link>
           )}
