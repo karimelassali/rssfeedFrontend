@@ -1,4 +1,4 @@
-import { ArrowLeft, X, Loader2 } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
 import { useState, useEffect } from "react";
 
 export function FilterModal({
@@ -6,24 +6,19 @@ export function FilterModal({
   onClose,
   onApply = () => {},
   initialFilters = [],
-  allSources = [], // Static list of sources
+  allSources = [],
 }) {
   const [selectedSources, setSelectedSources] = useState([]);
   const [availableSources, setAvailableSources] = useState([]);
 
   useEffect(() => {
     if (isOpen) {
-      setSelectedSources(initialFilters.map(filter => 
-        typeof filter === 'object' ? filter.value : filter
-      ));
-
-      // Format and set the static sources
+      setSelectedSources(initialFilters);
       const formattedSources = formatSources(allSources);
       setAvailableSources(formattedSources);
     }
   }, [isOpen, initialFilters, allSources]);
 
-  // Helper function to format sources
   const formatSources = (sources) => {
     return sources.map(source => {
       const sourceStr = typeof source === 'string' ? source : String(source);
@@ -55,7 +50,7 @@ export function FilterModal({
     setSelectedSources((prev) =>
       prev.includes(sourceId)
         ? prev.filter((id) => id !== sourceId)
-        : [...prev, sourceId]
+        : [sourceId] // Only allow one source for now; change to [...prev, sourceId] for multiple
     );
   };
 
@@ -64,7 +59,7 @@ export function FilterModal({
       type: 'source',
       value: sourceId,
     }));
-    console.log("Applying filters:", filters);
+    console.log("Filter Modal Applying:", filters);
     onApply(filters);
     onClose();
   };

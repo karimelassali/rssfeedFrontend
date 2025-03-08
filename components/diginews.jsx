@@ -1,36 +1,52 @@
-"use client"; // For Next.js App Router
+"use client";
 
-import { useState, useEffect } from "react";
-import { Search, Filter, XCircle, X, PenSquare, Loader2, ChevronDown, Star } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Search, Filter, XCircle, X, PenSquare, Loader2, ChevronDown, Star, ArrowLeft, Cog, LogOut, User, Bell } from "lucide-react";
 import axios from "axios";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { Toaster, toast } from "sonner";
 import DigiNewsSkeleton from "./ui/skeletons/diginews";
 import Cookies from "js-cookie";
-import { ArrowLeft, Cog } from "lucide-react";
-import { LogOut } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const FilterModal = dynamic(() => import('./filter-modal').then(mod => ({ default: mod.FilterModal })), {
-  loading: () => <div className="animate-pulse">Loading...</div>
+  loading: () => (
+    <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center">
+      <div className="bg-white rounded-xl p-6 shadow-xl w-full max-w-md mx-4">
+        <div className="flex items-center justify-center space-y-2">
+          <div className="w-8 h-8 rounded-full bg-green-100 animate-pulse"></div>
+          <div className="ml-4 w-full">
+            <div className="h-4 bg-green-100 rounded animate-pulse w-3/4 mb-2"></div>
+            <div className="h-3 bg-green-50 rounded animate-pulse w-1/2"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  ),
 });
 
 export default function DigiNews() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [activeFilters, setActiveFilters] = useState([]);
-  const [allData, setAllData] = useState([]);
-  const [filteredData, setFilteredData] = useState([]);
+  const [activeFilters, setActiveFilters] = useState({});
+  const [feeds, setFeeds] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [authToken, setAuthToken] = useState(null);
   const [userData, setUserData] = useState(null);
   const [userEmail, setUserEmail] = useState(null);
   const [debugInfo, setDebugInfo] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false); // New state for user menu
-
+  const [pagination, setPagination] = useState({
+    page: 1,
+    pageSize: 10,
+    totalPages: 1,
+  });
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
+  const userMenuRef = useRef(null);
 
   const staticSources = [
     'https://appweb.regione.vda.it/DBWeb/Comunicati.nsf/RSScomunicati.xml',
@@ -41,362 +57,265 @@ export default function DigiNews() {
     'https://pressevda.regione.vda.it/it/news/feed',
   ];
 
+  // Search debounce effect
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(searchQuery), 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Authentication check
   useEffect(() => {
     const token = Cookies.get('authToken');
     const userStr = Cookies.get('user');
     setAuthToken(token);
-    if (userStr) {
-      try {
+
+    try {
+      if (userStr) {
         const info = JSON.parse(userStr);
         setUserEmail(info.email);
         setUserData(info);
-      } catch (e) {
-        console.error('Error parsing user data:', e);
+      } else {
+        toast.info("Sessione scaduta, effettua l'accesso", { position: "top-center", duration: 3000 });
+        setTimeout(() => window.location.href = '/sign-in', 1500);
       }
-    } else {
-      window.location.href = '/sign-in';
+    } catch (e) {
+      console.error('Error parsing user data:', e);
+      toast.error("Errore nei dati utente, reindirizzamento...", { position: "top-center", duration: 3000 });
+      setTimeout(() => window.location.href = '/sign-in', 1500);
     }
   }, []);
 
-  useEffect(() => {
-    if (allData.length === 0) return;
+  // Fetch data directly from backend
+  const fetchData = useCallback(async (page = 1, isLoadMore = false) => {
+    if (!authToken) return;
 
-    let results = [...allData];
-
-    if (activeFilters.length > 0) {
-      results = results.filter(item => {
-        if (!item.source) return false;
-        return activeFilters.some(filter => {
-          if (typeof filter === 'object' && filter.type === 'source' && filter.value) {
-            return item.source === filter.value;
-          }
-          if (typeof filter === 'string') {
-            return item.source === filter;
-          }
-          return false;
-        });
-      });
-    }
-
-    if (searchQuery.trim() !== "") {
-      const query = searchQuery.toLowerCase().trim();
-      results = results.filter(item => 
-        (item.title && item.title.toLowerCase().includes(query)) || 
-        (item.source && item.source.toLowerCase().includes(query))
-      );
-    }
-
-    setFilteredData(results);
-  }, [allData, searchQuery, activeFilters]);
-
-  const fetchData = async (page = 1, isLoadMore = false) => {
     if (isLoadMore) setIsLoadingMore(true);
     else setIsLoading(true);
 
     try {
-      const response = await axios.get(`/api/articles?page=${page}`, {
-        params: { activeFilters: JSON.stringify(activeFilters) },
+      const backendUrl = new URL(`${process.env.NEXT_PUBLIC_API_URL}api/data`); 
+      backendUrl.searchParams.append('page', page);
+      backendUrl.searchParams.append('pageSize', pagination.pageSize);
+      if (searchQuery) backendUrl.searchParams.append('search', searchQuery);
+      if (Object.keys(activeFilters).length > 0) {
+        backendUrl.searchParams.append('activeFilters', JSON.stringify(activeFilters));
+      }
+      // Add cache-busting parameter
+      backendUrl.searchParams.append('_t', Date.now());
+
+      console.log("Direct backend request URL:", backendUrl.toString());
+
+      const response = await axios.get(backendUrl.toString(), {
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+        },
       });
 
       console.log("API Response:", response.data);
       setDebugInfo({ responseData: response.data, page });
 
-      const newData = Array.isArray(response.data) ? response.data : (response.data.data || []);
-      const filteredNewData = newData.filter(item => 
-        item.source && typeof item.source === 'string' && item.source.startsWith('https://')
-      );
+      const { data, pagination: pagData } = response.data;
+      const newData = Array.isArray(data) ? data : [];
 
       if (isLoadMore) {
-        setAllData(prevData => [...prevData, ...filteredNewData]);
+        setFeeds(prev => [...prev, ...newData]);
       } else {
-        setAllData(filteredNewData);
+        setFeeds(newData);
       }
+
+      setPagination(prev => ({
+        ...prev,
+        page,
+        totalPages: pagData?.total_pages || 1,
+      }));
     } catch (err) {
       console.error("Error fetching data:", err);
-      setError("Failed to load news data: " + (err.message || "Unknown error"));
-      toast.error(`Failed to ${isLoadMore ? "load more" : "load"} data: ${err.message || "Unknown error"}`, {
+      const errMsg = err.response?.data?.message || err.message || "Unknown error";
+      setError(`Failed to ${isLoadMore ? "load more" : "load"} data: ${errMsg}`);
+      toast.error(`Failed to ${isLoadMore ? "load more" : "load"} data: ${errMsg}`, {
         position: "bottom-right",
-        duration: 3000
+        duration: 3000,
       });
     } finally {
       if (isLoadMore) setIsLoadingMore(false);
       else setIsLoading(false);
     }
-  };
+  }, [authToken, pagination.pageSize, searchQuery, activeFilters]);
 
   useEffect(() => {
-    setCurrentPage(1);
     fetchData(1, false);
-  }, [activeFilters]);
+  }, [fetchData]);
 
+  // Close user menu on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isUserMenuOpen && userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isUserMenuOpen]);
+
+  // Handlers
   const handleClearAll = () => {
-    setActiveFilters([]);
+    setActiveFilters({});
     setSearchQuery("");
+    setPagination(prev => ({ ...prev, page: 1 }));
   };
 
   const handleClearSearch = () => {
     setSearchQuery("");
+    setPagination(prev => ({ ...prev, page: 1 }));
   };
 
   const handleClearFilters = () => {
-    setActiveFilters([]);
+    setActiveFilters({});
+    setPagination(prev => ({ ...prev, page: 1 }));
+    toast.success("Filtri rimossi", { position: "bottom-right", duration: 2000, style: { backgroundColor: '#34C759', color: 'white' } });
   };
 
   const handleLoadMore = () => {
-    const nextPage = currentPage + 1;
-    setCurrentPage(nextPage);
-    fetchData(nextPage, true);
+    const nextPage = pagination.page + 1;
+    if (nextPage <= pagination.totalPages) fetchData(nextPage, true);
   };
 
   const handleLogout = () => {
-    Cookies.remove('authToken');
-    Cookies.remove('user');
-    setAuthToken(null);
-    setUserData(null);
-    setUserEmail(null);
-    toast.success("Logout effettuato con successo", {
-      position: "bottom-right",
-      duration: 3000,
-      style: { backgroundColor: '#34C759', color: 'white' }
-    });
-    window.location.href = '/sign-in';
-  };
-
-  const toggleUserMenu = () => {
-    setIsUserMenuOpen(prev => !prev);
-  };
-
-  const getDomainFromUrl = (url) => {
-    if (!url || typeof url !== 'string') return '';
-    try {
-      if (url.includes('://')) {
-        const urlObj = new URL(url);
-        return urlObj.hostname.replace('www.', '');
-      }
-      return url;
-    } catch (e) {
-      console.error("Error extracting domain:", e);
-      return url;
+    if (confirm("Vuoi davvero effettuare il logout?")) {
+      Cookies.remove('authToken');
+      Cookies.remove('user');
+      setAuthToken(null);
+      setUserData(null);
+      setUserEmail(null);
+      toast.success("Logout completato", { position: "bottom-right", duration: 2000, style: { backgroundColor: '#34C759', color: 'white' } });
+      setTimeout(() => window.location.href = '/sign-in', 1000);
     }
   };
 
-  const getFavicon = (url) => {
-    const domain = getDomainFromUrl(url);
-    return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+  const handleFilterApply = (filters) => {
+    const newFilters = {};
+    if (filters.length > 0) newFilters.source = filters[0].value;
+    setActiveFilters(newFilters);
+    setPagination(prev => ({ ...prev, page: 1 }));
+    setIsFilterOpen(false);
+    if (filters.length > 0) {
+      toast.success(`Filtro applicato: ${filters[0].value.split('/').pop()}`, {
+        position: "bottom-right",
+        duration: 2000,
+        style: { backgroundColor: '#34C759', color: 'white' },
+      });
+    }
   };
+
+  // Utility functions
+  const getDomainFromUrl = (url) => url && typeof url === 'string' ? new URL(url).hostname.replace('www.', '') : '';
+  const getFavicon = (url) => `https://www.google.com/s2/favicons?domain=${getDomainFromUrl(url)}&sz=128`;
 
   const getTimeDifference = (pubDate) => {
     const now = new Date();
     const published = new Date(pubDate);
-    const diffSeconds = Math.abs((now.getTime() - published.getTime()) / 1000);
+    const diffSeconds = Math.abs((now - published) / 1000);
     const isFuture = published > now;
     const prefix = isFuture ? "Tra " : "";
     const padZero = (num) => String(num).padStart(2, '0');
-    const day = padZero(published.getDate());
-    const month = padZero(published.getMonth() + 1);
-    const year = published.getFullYear();
-    const hours24 = padZero(published.getHours());
-    const minutesTime = padZero(published.getMinutes());
-    const dateTimeString = `${day}/${month}/${year} alle ${hours24}:${minutesTime}`;
+    const dateTimeString = `${padZero(published.getDate())}/${padZero(published.getMonth() + 1)}/${published.getFullYear()} alle ${padZero(published.getHours())}:${padZero(published.getMinutes())}`;
     const isToday = now.toDateString() === published.toDateString();
-    const yesterday = new Date(now);
-    yesterday.setDate(now.getDate() - 1);
-    const isYesterday = yesterday.toDateString() === published.toDateString();
+    const isYesterday = new Date(now.setDate(now.getDate() - 1)).toDateString() === published.toDateString();
     const diffDays = Math.floor(diffSeconds / (60 * 60 * 24));
 
-    const getCalendarMonths = () => {
-      let months = (now.getFullYear() - published.getFullYear()) * 12;
-      months += now.getMonth() - published.getMonth();
-      if (now.getDate() < published.getDate()) months--;
-      return months;
-    };
-    const months = getCalendarMonths();
-
-    const getCalendarYears = () => {
-      let years = now.getFullYear() - published.getFullYear();
-      if (now.getMonth() < published.getMonth() || 
-          (now.getMonth() === published.getMonth() && now.getDate() < published.getDate())) {
-        years--;
-      }
-      return years;
-    };
-    const years = getCalendarYears();
-
-    if (diffSeconds < 60) {
-      return `${prefix}${Math.floor(diffSeconds)} ${Math.floor(diffSeconds) === 1 ? "secondo" : "secondi"}${isFuture ? "" : " fa"} (${isToday ? `oggi alle ${hours24}:${minutesTime}` : dateTimeString})`;
-    } else if (isToday) {
-      const totalMinutes = Math.floor(diffSeconds / 60);
+    if (diffSeconds < 60) return `${prefix}${Math.floor(diffSeconds)} secondi${isFuture ? "" : " fa"} (${isToday ? "oggi" : dateTimeString})`;
+    const totalMinutes = Math.floor(diffSeconds / 60);
+    if (isToday) {
       const hours = Math.floor(totalMinutes / 60);
       const minutes = totalMinutes % 60;
-      if (hours > 0) {
-        if (minutes > 0) {
-          return `${prefix}${hours} ${hours === 1 ? "ora" : "ore"} e ${minutes} ${minutes === 1 ? "minuto" : "minuti"}${isFuture ? "" : " fa"} (oggi alle ${hours24}:${minutesTime})`;
-        }
-        return `${prefix}${hours} ${hours === 1 ? "ora" : "ore"}${isFuture ? "" : " fa"} (oggi alle ${hours24}:${minutesTime})`;
-      } else {
-        return `${prefix}${totalMinutes} ${totalMinutes === 1 ? "minuto" : "minuti"}${isFuture ? "" : " fa"} (oggi alle ${hours24}:${minutesTime})`;
-      }
-    } else if (isYesterday) {
-      return `${prefix}ieri alle ${hours24}:${minutesTime}`;
-    } else if (diffDays < 7) {
-      return `${prefix}${diffDays} ${diffDays === 1 ? "giorno" : "giorni"}${isFuture ? "" : " fa"} (${dateTimeString})`;
-    } else if (months < 1) {
-      const weeks = Math.floor(diffDays / 7);
-      return `${prefix}${weeks} ${weeks === 1 ? "settimana" : "settimane"}${isFuture ? "" : " fa"} (${dateTimeString})`;
-    } else if (years < 1) {
-      return `${prefix}${months} ${months === 1 ? "mese" : "mesi"}${isFuture ? "" : " fa"} (${dateTimeString})`;
-    } else {
-      return `${prefix}${years} ${years === 1 ? "anno" : "anni"}${isFuture ? "" : " fa"} (${dateTimeString})`;
+      return hours > 0 ? `${prefix}${hours} ore${minutes > 0 ? ` e ${minutes} minuti` : ""}${isFuture ? "" : " fa"}` : `${prefix}${totalMinutes} minuti${isFuture ? "" : " fa"}`;
     }
+    if (isYesterday) return `${prefix}ieri`;
+    if (diffDays < 7) return `${prefix}${diffDays} giorni${isFuture ? "" : " fa"}`;
+    return dateTimeString;
   };
 
   const SourceIcon = ({ source }) => {
     const domain = getDomainFromUrl(source);
     const favicon = getFavicon(source);
-    const firstLetter = domain.charAt(0).toUpperCase();
-
     return (
-      <div className="relative">
-        <div className="bg-green-500 text-white p-1.5 rounded text-sm font-medium min-w-[28px] h-[28px] text-center flex items-center justify-center overflow-hidden">
-          <img
-            src={favicon}
-            alt={domain}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.style.display = 'none';
-              e.target.parentNode.innerHTML = firstLetter;
-            }}
-          />
-          <span className="absolute opacity-0">{firstLetter}</span>
-        </div>
+      <div className="bg-green-500 text-white p-1.5 rounded-lg shadow-sm w-8 h-8 flex items-center justify-center overflow-hidden">
+        <img src={favicon} alt={domain} className="w-full h-full object-cover" onError={(e) => e.target.style.display = 'none'} />
+        <span className="absolute text-sm font-medium" style={{ opacity: favicon ? 0 : 1 }}>{domain.charAt(0).toUpperCase()}</span>
       </div>
     );
   };
 
   const renderContent = () => {
-    if (isLoading) {
-      return <DigiNewsSkeleton />;
-    }
-
-    if (error && filteredData.length === 0) {
-      return (
-        <div role="alert" className="flex flex-col items-center justify-center p-8 text-center">
-          <XCircle className="h-12 w-12 text-red-500 mb-4" aria-hidden="true" />
-          <p className="text-gray-600">{error}</p>
-        </div>
-      );
-    }
-
-    if (filteredData.length === 0 && (activeFilters.length > 0 || searchQuery)) {
-      return (
-        <div role="status" className="flex flex-col items-center justify-center p-8 text-center">
-          <Toaster />
-          <div className="mb-4 text-gray-400">
-            <Filter className="h-12 w-12" aria-hidden="true" />
-          </div>
-          <p className="text-gray-600 mb-4">Nessun risultato trovato</p>
-          <button
-            onClick={handleClearAll}
-            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition-colors"
-            aria-label="Cancella tutti i filtri e la ricerca"
-          >
-            Cancella tutto
-          </button>
-        </div>
-      );
-    }
+    if (isLoading) return <DigiNewsSkeleton />;
+    if (error && feeds.length === 0) return (
+      <div className="flex flex-col items-center justify-center p-8 text-center text-gray-600">
+        <XCircle className="h-12 w-12 text-red-500 mb-4" />
+        <p>{error}</p>
+        <button onClick={() => fetchData(1, false)} className="mt-4 px-4 py-2 bg-green-500 text-white rounded-full">Riprova</button>
+      </div>
+    );
+    if (feeds.length === 0 && (Object.keys(activeFilters).length > 0 || searchQuery)) return (
+      <div className="flex flex-col items-center justify-center p-8 text-center text-gray-600">
+        <Filter className="h-12 w-12 text-gray-400 mb-4" />
+        <p>Nessun risultato trovato</p>
+        <button onClick={handleClearAll} className="mt-4 px-4 py-2 bg-gray-200 text-gray-700 rounded-full">Cancella tutto</button>
+      </div>
+    );
 
     return (
       <div className="space-y-6">
-        <div className="sr-only" role="status" aria-live="polite">
-          {filteredData.length} articoli trovati
-        </div>
-
         {process.env.NODE_ENV === 'development' && debugInfo && (
-          <div className="p-4 bg-gray-100 rounded-lg mb-4 text-xs overflow-auto max-h-40">
-            <details>
-              <summary className="cursor-pointer font-bold">Debug Info</summary>
-              <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
-            </details>
-          </div>
+          <details className="p-4 bg-gray-100 rounded-lg text-xs"><summary>Debug Info</summary><pre>{JSON.stringify(debugInfo, null, 2)}</pre></details>
         )}
-
-        {filteredData.map((item, index) => (
-          <article
-            key={`${item.id || index}-${item.pubDate || 'no-date'}`}
-            className="border-b border-gray-200 pb-6 last:border-0 relative"
-          >
-            <div className="flex items-start gap-3">
-              <SourceIcon source={item.source} />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium mb-1 truncate">
-                  {getDomainFromUrl(item.source)}
-                </p>
-                <h2 className="text-base font-semibold mb-2 line-clamp-1">
-                  {item.title}
-                </h2>
-                {item.pubDate && (
-                  <time dateTime={item.pubDate} className="text-sm text-gray-500 truncate">
-                    {getTimeDifference(item.pubDate)}
-                  </time>
-                )}
-              </div>
-
-              {!item.isPublished && (
-                <div className="flex gap-2">
-                  <Link
-                    href={`/news/${item.id}`}
-                    className="bg-green-400 p-1.5 rounded-lg"
-                    aria-label={`Modifica articolo: ${item.title}`}
-                  >
-                    <PenSquare className="h-4 w-4 text-white" aria-hidden="true" />
-                  </Link>
-                  <button
-                    onClick={async (e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      const response = await axios.post('/api/favorite', { source: item.source });
-                      toast(response.data.message, { 
-                        duration: 3000, 
-                        position: 'bottom-right', 
-                        style: { backgroundColor: '#34C759', color: 'white' } 
-                      });
-                    }}
-                    className="bg-yellow-400 hover:bg-yellow-500 p-1.5 rounded-lg transition-colors cursor-pointer"
-                    aria-label="Subscribe to notifications from this source"
-                  >
-                    <Star className="h-4 w-4 text-white hover:scale-110 transform transition-transform" aria-hidden="true" />
-                  </button>
+        <AnimatePresence>
+          {feeds.map((item, index) => (
+            <motion.article
+              key={`${item.id || index}-${item.pubDate || 'no-date'}`}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="border-b border-gray-200 pb-6 hover:bg-gray-50 rounded-lg p-2"
+            >
+              <div className="flex items-start gap-3">
+                <SourceIcon source={item.source} />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-700">{getDomainFromUrl(item.source)}</p>
+                  <h2 className="text-base font-semibold text-gray-900">{item.title}</h2>
+                  {item.pubDate && <time className="text-sm text-gray-500">{getTimeDifference(item.pubDate)}</time>}
                 </div>
-              )}
-            </div>
-
-            {item.isPublished === 1 && (
-              <span className="absolute top-0 right-0 bg-orange-100 text-orange-600 px-2 py-0.5 rounded text-sm">
-                Pubblicata
-              </span>
-            )}
-          </article>
-        ))}
-
-        {allData.length > 0 && (
+                {!item.isPublished && (
+                  <div className="flex gap-2">
+                    <Link href={`/news/${item.id}`} className="p-1.5 bg-green-500 text-white rounded-lg"><PenSquare className="h-4 w-4" /></Link>
+                    <button
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/'}api/favorite`, { source: item.source }, {
+                          headers: { 'Authorization': `Bearer ${authToken}` },
+                        });
+                        toast.success(response.data.message, { style: { backgroundColor: '#34C759', color: 'white' } });
+                      }}
+                      className="p-1.5 bg-yellow-500 text-white rounded-lg"
+                    >
+                      <Star className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
+                
+                {item.isPublished === 1 && <span className="absolute top-2 right-2 bg-orange-100 text-orange-600 px-2 py-1 rounded text-xs">Pubblicata</span>}
+              </div>
+            </motion.article>
+          ))}
+        </AnimatePresence>
+        {pagination.page < pagination.totalPages && (
           <button
             onClick={handleLoadMore}
             disabled={isLoadingMore}
-            className="w-full mt-4 px-6 py-3 bg-gradient-to-r from-green-400 to-green-500 text-white font-medium rounded-lg shadow-md hover:from-green-500 hover:to-green-600 transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
+            className="w-full mt-4 px-6 py-3 bg-green-500 text-white rounded-lg flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            {isLoadingMore ? (
-              <>
-                <Loader2 className="h-5 w-5 animate-spin" />
-                <span>Loading...</span>
-              </>
-            ) : (
-              <>
-                <span>Load More Articles ({filteredData.length})</span>
-                <ChevronDown className="h-5 w-5" />
-              </>
-            )}
+            {isLoadingMore ? <><Loader2 className="h-5 w-5 animate-spin" /> Caricamento...</> : <>Carica altri ({feeds.length}) <ChevronDown /></>}
           </button>
         )}
       </div>
@@ -404,137 +323,138 @@ export default function DigiNews() {
   };
 
   return (
-    <main className="container mx-auto px-4 py-8 pb-20 relative min-h-screen bg-gray-50">
+    <main className="container mx-auto px-4 py-8 pb-20 min-h-screen bg-gray-50">
       <Toaster />
       <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-8 sticky top-0 bg-white z-10 p-4 md:p-6 rounded-xl shadow-lg border border-gray-100 backdrop-blur-md bg-opacity-90">
-          {/* Search Bar */}
-          <div className="relative w-full md:flex-1">
-            <input
-              type="search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cerca articoli..."
-              className="w-full pl-12 pr-12 py-3 md:py-4 bg-white bg-opacity-70 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all duration-300 shadow-md hover:shadow-lg text-base md:text-lg font-medium"
-              aria-label="Cerca articoli"
-            />
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 md:h-6 w-5 md:w-6 text-gray-500" aria-hidden="true" />
-            {searchQuery && (
-              <button
-                onClick={handleClearSearch}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-red-500 transition-colors duration-200"
-                aria-label="Cancella ricerca"
-              >
-                <X className="h-5 md:h-6 w-5 md:w-6" aria-hidden="true" />
-              </button>
-            )}
-          </div>
+        <motion.header
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="sticky top-0 z-10 bg-white rounded-xl shadow-md p-4 md:p-6 border border-gray-100"
+        >
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            {/* Search Bar */}
+            <div className="relative w-full md:w-2/3">
+              <motion.input
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setSearchFocused(false)}
+                placeholder="Cerca articoli..."
+                className="w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all duration-300 shadow-sm text-gray-800"
+                aria-label="Cerca articoli"
+                whileFocus={{ scale: 1.02 }}
+              />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+              <AnimatePresence>
+                {searchQuery && (
+                  <motion.button
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0 }}
+                    onClick={handleClearSearch}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-red-500"
+                  >
+                    <X className="h-5 w-5" />
+                  </motion.button>
+                )}
+              </AnimatePresence>
+            </div>
 
-          {/* Filter and Clear Filters Buttons */}
-          <div className="flex flex-wrap items-center gap-3 mt-3 md:mt-0">
-            <button
-              onClick={() => setIsFilterOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 md:px-5 md:py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400"
-              aria-label="Apri filtri"
-              aria-expanded={isFilterOpen}
-            >
-              <Filter className="h-4 md:h-5 w-4 md:w-5" aria-hidden="true" />
-              <span className="text-sm font-semibold">Filtri</span>
-              {activeFilters.length > 0 && (
-                <span className="bg-white text-green-600 text-xs px-2 py-1 rounded-full shadow-sm">
-                  {activeFilters.length}
-                </span>
+            {/* Actions */}
+            <div className="flex items-center gap-3">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setIsFilterOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg shadow hover:bg-green-600 transition-all"
+              >
+                <Filter className="h-4 w-4" />
+                Filtri
+                {Object.keys(activeFilters).length > 0 && (
+                  <span className="bg-white text-green-600 text-xs px-2 py-0.5 rounded-full">{Object.keys(activeFilters).length}</span>
+                )}
+              </motion.button>
+
+              {Object.keys(activeFilters).length > 0 && (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleClearFilters}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all"
+                >
+                  Cancella
+                </motion.button>
               )}
-            </button>
 
-            {activeFilters.length > 0 && (
-              <button
-                onClick={handleClearFilters}
-                className="flex items-center gap-2 px-4 py-2 md:px-5 md:py-2.5 bg-gradient-to-r from-gray-200 to-gray-300 text-gray-700 rounded-xl hover:from-gray-300 hover:to-gray-400 transition-all duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
-                aria-label="Cancella tutti i filtri"
-              >
-                <XCircle className="h-4 md:h-5 w-4 md:w-5" aria-hidden="true" />
-                <span className="text-sm font-semibold">Cancella</span>
-              </button>
-            )}
-          </div>
-
-          {/* User Data */}
-          {authToken ? (
-            <div className="relative flex items-center gap-2 mt-3 md:mt-0">
-              <button
-                onClick={toggleUserMenu}
-                className="bg-green-50 border border-green-200 rounded-xl px-4 py-2.5 shadow-md hover:shadow-lg transition-all duration-300 text-green-600 font-semibold text-sm truncate max-w-[150px] hover:underline focus:outline-none focus:ring-2 focus:ring-green-400"
-                aria-label="Opzioni utente"
-                aria-expanded={isUserMenuOpen}
-              >
-                {userEmail}
-              </button>
-              {isUserMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 flex flex-col gap-2 bg-white border border-gray-200 rounded-lg shadow-xl p-2 w-48 z-20 md:w-56">
-                  <Link
-                    href="/dashboard"
-                    className="flex items-center gap-2 px-3 py-2 text-green-600 hover:bg-green-50 rounded-md transition-colors duration-200 text-sm font-medium"
-                    aria-label="Vai al dashboard"
+              {/* User Menu */}
+              {authToken ? (
+                <div className="relative" ref={userMenuRef}>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    onClick={() => setIsUserMenuOpen(prev => !prev)}
+                    className="flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-lg text-green-600 font-medium hover:bg-green-100"
                   >
-                    <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-                    Dashboard
-                  </Link>
-                  <Link
-                    href="/settings"
-                    className="flex items-center gap-2 px-3 py-2 text-green-600 hover:bg-green-50 rounded-md transition-colors duration-200 text-sm font-medium"
-                    aria-label="Vai alle impostazioni"
-                  >
-                    <Cog className="h-4 w-4" aria-hidden="true" />
-                    Impostazioni
-                  </Link>
+                    <User className="h-5 w-5" />
+                    <span className="truncate max-w-[150px]">{userEmail}</span>
+                  </motion.button>
+                  <AnimatePresence>
+                    {isUserMenuOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                        className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-20"
+                      >
+                        <div className="px-3 py-2 text-gray-600 text-sm border-b border-gray-200">
+                          <p className="font-medium">{userEmail}</p>
+                          <p className="text-xs opacity-75">Utente autenticato</p>
+                        </div>
+                        <Link href="/dashboard" className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-green-50 rounded-md">
+                          <ArrowLeft className="h-4 w-4" /> Dashboard
+                        </Link>
+                        <Link href="/settings" className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-green-50 rounded-md">
+                          <User className="h-4 w-4" /> Profilo
+                        </Link>
+                        {/* <Link href="/notifications" className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-green-50 rounded-md">
+                          <Bell className="h-4 w-4" /> Notifiche
+                        </Link> */}
+                        <Link href="/settings" className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-green-50 rounded-md">
+                          <Cog className="h-4 w-4" /> Impostazioni
+                        </Link>
+                        <button
+                          onClick={handleLogout}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 rounded-md text-left"
+                        >
+                          <LogOut className="h-4 w-4" /> Logout
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
+              ) : (
+                <Link href="/sign-in" className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all">
+                  Accedi
+                </Link>
               )}
-              <button
-                onClick={handleLogout}
-                className="p-2 md:p-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-md hover:shadow-lg"
-                aria-label="Logout"
-              >
-                <LogOut className="h-4 md:h-5 w-4 md:w-5" aria-hidden="true" />
-              </button>
             </div>
-          ) : (
-            <div className="flex flex-wrap items-center gap-3 mt-3 md:mt-0">
-              <Link
-                href="/sign-in"
-                className="px-4 py-2 md:px-5 md:py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-300 text-sm font-semibold shadow-md hover:shadow-lg"
-                aria-label="Accedi"
-              >
-                Accedi
-              </Link>
-              <Link
-                href="/settings"
-                className="px-4 py-2 md:px-5 md:py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-300 text-sm font-semibold shadow-md hover:shadow-lg"
-                aria-label="Impostazioni"
-              >
-                Impostazioni
-              </Link>
-            </div>
-          )}
-        </div>
+          </div>
+        </motion.header>
 
-        <div className="bg-white rounded-xl shadow-sm p-6 overflow-y-auto">
-          {renderContent()}
-        </div>
+        <div className="bg-white rounded-xl shadow-sm p-6">{renderContent()}</div>
+
+        {isFilterOpen && (
+          <FilterModal
+            isOpen={isFilterOpen}
+            onClose={() => setIsFilterOpen(false)}
+            initialFilters={Object.values(activeFilters)}
+            onApply={handleFilterApply}
+            allSources={staticSources}
+          />
+        )}
       </div>
-
-      {isFilterOpen && (
-        <FilterModal
-          isOpen={isFilterOpen}
-          onClose={() => setIsFilterOpen(false)}
-          initialFilters={activeFilters.map(f => typeof f === 'object' ? f.value : f)}
-          onApply={(filters) => {
-            console.log("Received filters from modal:", filters);
-            setActiveFilters(filters);
-          }}
-          allSources={staticSources}
-        />
-      )}
     </main>
   );
 }
