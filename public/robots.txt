@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://rssfeed-frontend.vercel.app/sitemap.xml
