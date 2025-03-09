@@ -1,30 +1,44 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Search, Filter, XCircle, X, PenSquare, Loader2, ChevronDown, Star, ArrowLeft, Cog, LogOut, User, Bell } from "lucide-react";
+import { Search, Filter, XCircle, X, PenSquare, Loader2, ChevronDown, Star, ArrowLeft, Cog, LogOut, User } from "lucide-react";
 import axios from "axios";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { Toaster, toast } from "sonner";
-import DigiNewsSkeleton from "./ui/skeletons/diginews";
 import Cookies from "js-cookie";
 import { motion, AnimatePresence } from "framer-motion";
 
 const FilterModal = dynamic(() => import('./filter-modal').then(mod => ({ default: mod.FilterModal })), {
   loading: () => (
     <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center">
-      <div className="bg-white rounded-xl p-6 shadow-xl w-full max-w-md mx-4">
+      <div className="bg-white rounded-xl p-6 shadow-xl w-full max-w-md mx-4 animate-pulse">
         <div className="flex items-center justify-center space-y-2">
-          <div className="w-8 h-8 rounded-full bg-green-100 animate-pulse"></div>
+          <div className="w-8 h-8 rounded-full bg-green-100"></div>
           <div className="ml-4 w-full">
-            <div className="h-4 bg-green-100 rounded animate-pulse w-3/4 mb-2"></div>
-            <div className="h-3 bg-green-50 rounded animate-pulse w-1/2"></div>
+            <div className="h-4 bg-green-100 rounded w-3/4 mb-2"></div>
+            <div className="h-3 bg-green-50 rounded w-1/2"></div>
           </div>
         </div>
       </div>
     </div>
   ),
 });
+
+const DigiNewsSkeleton = () => (
+  <div className="space-y-4">
+    {[...Array(5)].map((_, i) => (
+      <div key={i} className="flex items-start gap-3 p-2 animate-pulse">
+        <div className="w-8 h-8 rounded-lg bg-gray-200"></div>
+        <div className="flex-1 space-y-2">
+          <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+          <div className="h-5 bg-gray-200 rounded w-3/4"></div>
+          <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+        </div>
+      </div>
+    ))}
+  </div>
+);
 
 export default function DigiNews() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -39,14 +53,11 @@ export default function DigiNews() {
   const [userData, setUserData] = useState(null);
   const [userEmail, setUserEmail] = useState(null);
   const [debugInfo, setDebugInfo] = useState(null);
-  const [pagination, setPagination] = useState({
-    page: 1,
-    pageSize: 10,
-    totalPages: 1,
-  });
+  const [pagination, setPagination] = useState({ page: 1, pageSize: 10, totalPages: 1 });
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
   const userMenuRef = useRef(null);
+  const inputRef = useRef(null);
 
   const staticSources = [
     'https://appweb.regione.vda.it/DBWeb/Comunicati.nsf/RSScomunicati.xml',
@@ -56,6 +67,15 @@ export default function DigiNews() {
     'https://pressevda.regione.vda.it/it/events/feed',
     'https://pressevda.regione.vda.it/it/news/feed',
   ];
+
+  // Detect if the device is a laptop (screen width >= 1024px)
+  const [isLaptop, setIsLaptop] = useState(false);
+  useEffect(() => {
+    const checkScreenSize = () => setIsLaptop(window.innerWidth >= 1024);
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
 
   // Search debounce effect
   useEffect(() => {
@@ -68,7 +88,6 @@ export default function DigiNews() {
     const token = Cookies.get('authToken');
     const userStr = Cookies.get('user');
     setAuthToken(token);
-
     try {
       if (userStr) {
         const info = JSON.parse(userStr);
@@ -85,58 +104,34 @@ export default function DigiNews() {
     }
   }, []);
 
-  // Fetch data directly from backend
+  // Fetch data
   const fetchData = useCallback(async (page = 1, isLoadMore = false) => {
     if (!authToken) return;
-
     if (isLoadMore) setIsLoadingMore(true);
     else setIsLoading(true);
-
     try {
-      const backendUrl = new URL(`${process.env.NEXT_PUBLIC_API_URL}api/data`); 
+      const backendUrl = new URL(`${process.env.NEXT_PUBLIC_API_URL}api/data`);
       backendUrl.searchParams.append('page', page);
       backendUrl.searchParams.append('pageSize', pagination.pageSize);
       if (searchQuery) backendUrl.searchParams.append('search', searchQuery);
       if (Object.keys(activeFilters).length > 0) {
         backendUrl.searchParams.append('activeFilters', JSON.stringify(activeFilters));
       }
-      // Add cache-busting parameter
       backendUrl.searchParams.append('_t', Date.now());
 
-      console.log("Direct backend request URL:", backendUrl.toString());
-
       const response = await axios.get(backendUrl.toString(), {
-        headers: {
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${authToken}`,
-        },
+        headers: { 'Authorization': `Bearer ${authToken}` },
       });
-
-      console.log("API Response:", response.data);
-      setDebugInfo({ responseData: response.data, page });
 
       const { data, pagination: pagData } = response.data;
       const newData = Array.isArray(data) ? data : [];
-
-      if (isLoadMore) {
-        setFeeds(prev => [...prev, ...newData]);
-      } else {
-        setFeeds(newData);
-      }
-
-      setPagination(prev => ({
-        ...prev,
-        page,
-        totalPages: pagData?.total_pages || 1,
-      }));
+      if (isLoadMore) setFeeds(prev => [...prev, ...newData]);
+      else setFeeds(newData);
+      setPagination(prev => ({ ...prev, page, totalPages: pagData?.total_pages || 1 }));
     } catch (err) {
-      console.error("Error fetching data:", err);
       const errMsg = err.response?.data?.message || err.message || "Unknown error";
       setError(`Failed to ${isLoadMore ? "load more" : "load"} data: ${errMsg}`);
-      toast.error(`Failed to ${isLoadMore ? "load more" : "load"} data: ${errMsg}`, {
-        position: "bottom-right",
-        duration: 3000,
-      });
+      toast.error(`Errore: ${errMsg}`, { position: "bottom-right", duration: 3000 });
     } finally {
       if (isLoadMore) setIsLoadingMore(false);
       else setIsLoading(false);
@@ -157,6 +152,18 @@ export default function DigiNews() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isUserMenuOpen]);
+
+  // Keyboard shortcut for search (Ctrl + K)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.ctrlKey && e.key === 'k') {
+        e.preventDefault();
+        inputRef.current?.focus();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Handlers
   const handleClearAll = () => {
@@ -240,7 +247,7 @@ export default function DigiNews() {
     const domain = getDomainFromUrl(source);
     const favicon = getFavicon(source);
     return (
-      <div className="bg-green-500 text-white p-1.5 rounded-lg shadow-sm w-8 h-8 flex items-center justify-center overflow-hidden">
+      <div className="relative bg-gradient-to-br from-green-500 to-green-600 text-white p-1.5 rounded-lg shadow-md w-8 h-8 flex items-center justify-center overflow-hidden">
         <img src={favicon} alt={domain} className="w-full h-full object-cover" onError={(e) => e.target.style.display = 'none'} />
         <span className="absolute text-sm font-medium" style={{ opacity: favicon ? 0 : 1 }}>{domain.charAt(0).toUpperCase()}</span>
       </div>
@@ -253,19 +260,19 @@ export default function DigiNews() {
       <div className="flex flex-col items-center justify-center p-8 text-center text-gray-600">
         <XCircle className="h-12 w-12 text-red-500 mb-4" />
         <p>{error}</p>
-        <button onClick={() => fetchData(1, false)} className="mt-4 px-4 py-2 bg-green-500 text-white rounded-full">Riprova</button>
+        <button onClick={() => fetchData(1, false)} className="mt-4 px-4 py-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition-all">Riprova</button>
       </div>
     );
     if (feeds.length === 0 && (Object.keys(activeFilters).length > 0 || searchQuery)) return (
       <div className="flex flex-col items-center justify-center p-8 text-center text-gray-600">
         <Filter className="h-12 w-12 text-gray-400 mb-4" />
         <p>Nessun risultato trovato</p>
-        <button onClick={handleClearAll} className="mt-4 px-4 py-2 bg-gray-200 text-gray-700 rounded-full">Cancella tutto</button>
+        <button onClick={handleClearAll} className="mt-4 px-4 py-2 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition-all">Cancella tutto</button>
       </div>
     );
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-4">
         {process.env.NODE_ENV === 'development' && debugInfo && (
           <details className="p-4 bg-gray-100 rounded-lg text-xs"><summary>Debug Info</summary><pre>{JSON.stringify(debugInfo, null, 2)}</pre></details>
         )}
@@ -277,18 +284,26 @@ export default function DigiNews() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
-              className="border-b border-gray-200 pb-6 hover:bg-gray-50 rounded-lg p-2"
+              className="border-b border-gray-200 pb-4 hover:bg-gray-50 rounded-lg p-3 transition-all duration-200"
             >
               <div className="flex items-start gap-3">
                 <SourceIcon source={item.source} />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-700">{getDomainFromUrl(item.source)}</p>
-                  <h2 className="text-base font-semibold text-gray-900">{item.title}</h2>
-                  {item.pubDate && <time className="text-sm text-gray-500">{getTimeDifference(item.pubDate)}</time>}
+                  <p className="text-xs font-medium text-gray-600">{getDomainFromUrl(item.source)}</p>
+                  <h2 className="text-lg font-semibold text-gray-900 hover:text-green-600 transition-colors">{item.title}</h2>
+                  <div className="flex items-center gap-2">
+                    {item.pubDate && <time className="text-xs text-gray-500">{getTimeDifference(item.pubDate)}</time>}
+                    {item.isPublished == 1 && (
+                      <span className="bg-green-100 text-green-600 px-2 py-0.5 rounded-full text-xs font-medium">Pubblicato</span>
+                    )}
+                  </div>
                 </div>
                 {!item.isPublished && (
                   <div className="flex gap-2">
-                    <Link href={`/news/${item.id}`} className="p-1.5 bg-green-500 text-white rounded-lg"><PenSquare className="h-4 w-4" /></Link>
+                    <Link href={`/news/${item.id}`} className="relative p-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600 group">
+                      <PenSquare className="h-4 w-4" />
+                      <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2">Modifica</span>
+                    </Link>
                     <button
                       onClick={async (e) => {
                         e.preventDefault();
@@ -297,152 +312,170 @@ export default function DigiNews() {
                         });
                         toast.success(response.data.message, { style: { backgroundColor: '#34C759', color: 'white' } });
                       }}
-                      className="p-1.5 bg-yellow-500 text-white rounded-lg"
+                      className="relative p-1.5 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 group"
                     >
                       <Star className="h-4 w-4" />
+                      <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2">Preferito</span>
                     </button>
                   </div>
                 )}
-                {/* {item.isPublished === 1 && <span className="absolute top-2 right-2 bg-orange-100 text-orange-600 px-2 py-1 rounded text-xs">Pubblicata</span>} */}
               </div>
             </motion.article>
           ))}
         </AnimatePresence>
         {pagination.page < pagination.totalPages && (
-          <button
+          <motion.button
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.95 }}
             onClick={handleLoadMore}
             disabled={isLoadingMore}
-            className="w-full mt-4 px-6 py-3 bg-green-500 text-white rounded-lg flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full md:w-1/2 mx-auto mt-6 px-6 py-3 bg-green-500 text-white rounded-full flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-green-600 transition-all"
           >
-            {isLoadingMore ? <><Loader2 className="h-5 w-5 animate-spin" /> Caricamento...</> : <>Carica altri ({feeds.length}) <ChevronDown /></>}
-          </button>
+            {isLoadingMore ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin" /> Caricamento...
+              </>
+            ) : (
+              <>
+                Carica altri ({feeds.length}) <ChevronDown className="h-5 w-5" />
+              </>
+            )}
+          </motion.button>
         )}
       </div>
     );
   };
 
   return (
-    <main className="container mx-auto px-4 py-8 pb-20 min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
       <Toaster />
-      <div className="max-w-4xl mx-auto space-y-6">
-        <motion.header
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="sticky top-0 z-10 bg-white rounded-xl shadow-md p-4 md:p-6 border border-gray-100"
-        >
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            {/* Search Bar */}
-            <div className="relative w-full md:w-2/3">
-              <motion.input
-                type="search"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => setSearchFocused(true)}
-                onBlur={() => setSearchFocused(false)}
-                placeholder="Cerca articoli..."
-                className="w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all duration-300 shadow-sm text-gray-800"
-                aria-label="Cerca articoli"
-                whileFocus={{ scale: 1.02 }}
-              />
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
-              <AnimatePresence>
-                {searchQuery && (
-                  <motion.button
-                    initial={{ opacity: 0, scale: 0 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0 }}
-                    onClick={handleClearSearch}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-red-500"
-                  >
-                    <X className="h-5 w-5" />
-                  </motion.button>
-                )}
-              </AnimatePresence>
-            </div>
+      {/* Enhanced Header */}
+      <motion.header
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="sticky top-0 z-10 bg-white/80 backdrop-blur-md rounded-b-xl shadow-md p-4 md:p-6 border border-gray-100"
+      >
+        <div className="mx-auto max-w-[50%] flex flex-col md:flex-row items-center justify-between gap-4">
+          {/* Search Bar */}
+          <div className="relative w-full max-w-md md:max-w-lg flex items-center">
+            <motion.input
+              ref={inputRef}
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
+              placeholder="Cerca articoli..."
+              className="w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-400 focus:border-transparent transition-all duration-300 shadow-sm text-gray-800 placeholder-gray-400"
+              aria-label="Cerca articoli"
+              whileFocus={{ scale: 1.02 }}
+            />
+            <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 ${searchFocused ? 'text-green-500' : 'text-gray-500'}`} />
+            <AnimatePresence>
+              {searchQuery && (
+                <motion.button
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0 }}
+                  onClick={handleClearSearch}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-red-500"
+                >
+                  <X className="h-5 w-5" />
+                </motion.button>
+              )}
+            </AnimatePresence>
+          </div>
 
-            {/* Actions */}
-            <div className="flex items-center gap-3">
+          {/* Actions */}
+          <div className="flex items-center gap-3">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setIsFilterOpen(true)}
+              className="relative flex items-center justify-center p-2 md:px-4 md:py-2 bg-green-500 text-white rounded-lg shadow hover:bg-green-600 transition-all"
+            >
+              <Filter className="h-4 w-4" />
+              <span className="hidden md:inline ml-2">Filtri</span>
+              {Object.keys(activeFilters).length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                  {Object.keys(activeFilters).length}
+                </span>
+              )}
+            </motion.button>
+
+            {Object.keys(activeFilters).length > 0 && (
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => setIsFilterOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg shadow hover:bg-green-600 transition-all"
+                onClick={handleClearFilters}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all hidden md:block"
               >
-                <Filter className="h-4 w-4" />
-                Filtri
-                {Object.keys(activeFilters).length > 0 && (
-                  <span className="bg-white text-green-600 text-xs px-2 py-0.5 rounded-full">{Object.keys(activeFilters).length}</span>
-                )}
+                Cancella
               </motion.button>
+            )}
 
-              {Object.keys(activeFilters).length > 0 && (
+            {authToken ? (
+              <div className="relative" ref={userMenuRef}>
                 <motion.button
                   whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleClearFilters}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-all"
+                  onClick={() => setIsUserMenuOpen(prev => !prev)}
+                  className="flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-lg text-green-600 font-medium hover:bg-green-100"
                 >
-                  Cancella
+                  <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-medium">
+                    {userEmail?.[0]?.toUpperCase() || 'U'}
+                  </div>
+                  <span className="hidden md:inline truncate max-w-[150px]">{userEmail}</span>
                 </motion.button>
-              )}
-
-              {/* User Menu */}
-              {authToken ? (
-                <div className="relative" ref={userMenuRef}>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    onClick={() => setIsUserMenuOpen(prev => !prev)}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-lg text-green-600 font-medium hover:bg-green-100"
-                  >
-                    <User className="h-5 w-5" />
-                    <span className="truncate max-w-[150px]">{userEmail}</span>
-                  </motion.button>
-                  <AnimatePresence>
-                    {isUserMenuOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.2 }}
-                        className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-20"
+                <AnimatePresence>
+                  {isUserMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-20"
+                    >
+                      <div className="px-3 py-2 text-gray-600 text-sm border-b border-gray-200">
+                        <p className="font-medium">{userEmail}</p>
+                        <p className="text-xs opacity-75">Utente autenticato</p>
+                      </div>
+                      <Link href="/dashboard" className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-green-50 rounded-md">
+                        <ArrowLeft className="h-4 w-4" /> Dashboard
+                      </Link>
+                      <Link href="/settings" className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-green-50 rounded-md">
+                        <User className="h-4 w-4" /> Profilo
+                      </Link>
+                      <Link href="/settings" className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-green-50 rounded-md">
+                        <Cog className="h-4 w-4" /> Impostazioni
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 rounded-md text-left"
                       >
-                        <div className="px-3 py-2 text-gray-600 text-sm border-b border-gray-200">
-                          <p className="font-medium">{userEmail}</p>
-                          <p className="text-xs opacity-75">Utente autenticato</p>
-                        </div>
-                        <Link href="/dashboard" className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-green-50 rounded-md">
-                          <ArrowLeft className="h-4 w-4" /> Dashboard
-                        </Link>
-                        <Link href="/settings" className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-green-50 rounded-md">
-                          <User className="h-4 w-4" /> Profilo
-                        </Link>
-                        {/* <Link href="/notifications" className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-green-50 rounded-md">
-                          <Bell className="h-4 w-4" /> Notifiche
-                        </Link> */}
-                        <Link href="/settings" className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-green-50 rounded-md">
-                          <Cog className="h-4 w-4" /> Impostazioni
-                        </Link>
-                        <button
-                          onClick={handleLogout}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-red-600 hover:bg-red-50 rounded-md text-left"
-                        >
-                          <LogOut className="h-4 w-4" /> Logout
-                        </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              ) : (
-                <Link href="/sign-in" className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all">
-                  Accedi
-                </Link>
-              )}
-            </div>
+                        <LogOut className="h-4 w-4" /> Logout
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <Link href="/sign-in" className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all">
+                Accedi
+              </Link>
+            )}
           </div>
-        </motion.header>
+        </div>
+      </motion.header>
 
-        <div className="bg-white rounded-xl shadow-sm p-6">{renderContent()}</div>
+      {/* Main Content */}
+      <div className="container mx-auto px-4 py-8 pb-20 max-w-4xl">
+        {isLoading && (
+          <div className="w-full h-1 bg-gray-200 rounded-full overflow-hidden">
+            <div className="h-full bg-green-500 animate-progress"></div>
+          </div>
+        )}
+        <div className="mt-6 bg-white rounded-xl shadow-sm p-6">{renderContent()}</div>
 
         {isFilterOpen && (
           <FilterModal
@@ -456,4 +489,21 @@ export default function DigiNews() {
       </div>
     </main>
   );
+}
+
+// Custom Tailwind animation for progress bar
+const styles = `
+  @keyframes progress {
+    0% { width: 0%; }
+    50% { width: 75%; }
+    100% { width: 100%; }
+  }
+  .animate-progress {
+    animation: progress 2s infinite;
+  }
+`;
+if (typeof document !== 'undefined') {
+  const styleSheet = document.createElement('style');
+  styleSheet.textContent = styles;
+  document.head.appendChild(styleSheet);
 }
