@@ -36,13 +36,13 @@ export const metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://rssfeed-frontend.vercel.app/og-image.jpg',
+    url: 'https://rssfeed-frontend.vercel.app/',
     siteName: 'DigiNews',
     title: 'DigiNews - Your Trusted Digital News Source',
     description: 'Your trusted source for digital news and updates, delivering real-time coverage of the latest stories and events',
     images: [
       {
-        url: 'https://diginews.com/og-image.jpg',
+        url: 'https://rssfeed-frontend.vercel.app/logo.jpg',
         width: 1200,
         height: 630,
         alt: 'DigiNews - Digital News Platform'
@@ -53,14 +53,14 @@ export const metadata = {
     card: 'summary_large_image',
     title: 'DigiNews - Your Trusted Digital News Source',
     description: 'Your trusted source for digital news and updates, delivering real-time coverage of the latest stories and events',
-    images: ['https://diginews.com/twitter-image.jpg'],
+    images: ['https://rssfeed-frontend.vercel.app/twitter-image.jpg'],
     creator: '@diginews'
   },
   verification: {
     google: 'google-site-verification-code',
     yandex: 'yandex-verification-code',
     other: {
-      me: ['https://rssfeed-frontend.vercel.app/og-image.jpg']
+      me: ['https://rssfeed-frontend.vercel.app/logo.jpg']
     }
   }
 };
