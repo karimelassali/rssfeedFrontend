@@ -217,7 +217,7 @@ export default function DigiNews() {
 
   // Utility functions
   const getDomainFromUrl = (url) => url && typeof url === 'string' ? new URL(url).hostname.replace('www.', '') : '';
-  const getFavicon = (url) => `https://www.google.com/s2/favicons?domain=${getDomainFromUrl(url)}&sz=128`;
+  const getFavicon = (url) => url == 'https://appweb.regione.vda.it/DBWeb/Comunicati.nsf/RSScomunicati.xml'? 'A' : `https://www.google.com/s2/favicons?domain=${getDomainFromUrl(url)}&sz=128`;
 
   const getTimeDifference = (pubDate) => {
     const now = new Date();

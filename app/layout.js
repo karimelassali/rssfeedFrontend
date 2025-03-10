@@ -18,7 +18,7 @@ export const metadata = {
   },
   description: "Your trusted source for digital news and updates, delivering real-time coverage of the latest stories and events",
   keywords: ["digital news", "news updates", "latest news", "breaking news", "real-time news"],
-  authors: [{ name: "DigiNews Team" }],
+  authors: [{ name: "Digival" }],
   viewport: "width=device-width, initial-scale=1, maximum-scale=5",
   themeColor: "#ffffff",
   manifest: "/manifest.json",
