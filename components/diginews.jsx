@@ -307,10 +307,11 @@ export default function DigiNews() {
                     <button
                       onClick={async (e) => {
                         e.preventDefault();
-                        const response = await axios.post(`https://appuntamentipa.it/api/favorite_sources/store`, {user_id: userData.id, source: item.source }, {
+                        const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/'}api/favorite_sources/store`, {user_id: userData.id, source: item.source }, {
                           headers: { 'Authorization': `Bearer ${authToken}` },
                         });
-                        toast.success(response.data.message, { style: { backgroundColor: '#34C759', color: 'white' } });
+                        response.data.type && response.data.type === 'success' && toast.success(response.data.message, { style: { backgroundColor: '#34C759', color: 'white' } });
+                        response.data.type && response.data.type === 'warning' && toast.warning(response.data.message, { style: { backgroundColor: '#F7DC6F', color: 'black' } });
                       }}
                       className="relative p-1.5 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 group"
                     >
