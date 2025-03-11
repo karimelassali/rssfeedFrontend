@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Search, Plus, MoreHorizontal, CheckCircle, Clock, AlertCircle, GripVertical } from 'lucide-react'
+import { Search, Plus, MoreHorizontal, CheckCircle, Clock, AlertCircle, GripVertical, ArrowLeft } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
@@ -353,6 +353,18 @@ export default function Dashboard({ isHomepage = true }) {
   return (
     <div className="container mx-auto py-8 px-4 max-w-7xl">
       <div className="flex flex-col space-y-8">
+        {/* Back to Home Navigation */}
+        <div className="mb-2">
+          <Link 
+            href="/" 
+            className="inline-flex items-center gap-2 text-gray-600 hover:text-[#22C55E] transition-colors duration-200 group"
+            aria-label="Torna alla Home Pagina"
+          >
+            <ArrowLeft className="h-5 w-5 group-hover:transform group-hover:-translate-x-1 transition-transform duration-200" />
+            <span className="font-medium">Torna alla Home Pagina</span>
+          </Link>
+        </div>
+      
         {/* Fixed Height Header to prevent shifting */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 min-h-[80px]">
           <div>
@@ -365,7 +377,7 @@ export default function Dashboard({ isHomepage = true }) {
             </Link>
           )}
         </div>
-
+  
         {/* Tabs and Search */}
         <div className="grid gap-4 md:grid-cols-[1fr_300px]">
           <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -390,7 +402,7 @@ export default function Dashboard({ isHomepage = true }) {
               </TabsTrigger>
             </TabsList>
           </Tabs>
-
+  
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -402,7 +414,7 @@ export default function Dashboard({ isHomepage = true }) {
             />
           </div>
         </div>
-
+  
         {/* Error message */}
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
@@ -410,7 +422,7 @@ export default function Dashboard({ isHomepage = true }) {
             <span className="block sm:inline">{error}</span>
           </div>
         )}
-
+  
         {/* Posts Grid */}
         <AnimatePresence mode="wait">
           {isLoading ? (

@@ -7,10 +7,13 @@ import ProfileSection from "@/components/profile-section";
 import ApiKeySection from "@/components/api-key-section";
 import FavoritesSection from "@/components/favorites-section";
 import StatsSection from "@/components/stats-section";
-import { User, LinkIcon, Key, BarChart, ArrowBigLeft } from "lucide-react";
+import { User, LinkIcon, Key, BarChart } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import axios from "axios";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("profile");
@@ -75,14 +78,20 @@ export default function SettingsPage() {
       transition={{ duration: 0.5 }}
       className="max-w-4xl mx-auto"
     >
-      <div className="flex items-center mb-6">
-        <button
-          onClick={() => router.push("/")}
-          className="flex items-center gap-2 text-green-400 hover:text-green-600 transition duration-200"
+      {/* Back to Home Navigation */}
+      <div className="mb-6">
+        <Link 
+          href="/" 
+          className="inline-flex items-center gap-2 text-gray-600 hover:text-green-500 transition-colors duration-200 group"
+          aria-label="Torna alla Home"
         >
-          <ArrowBigLeft size={50} />
-          <span className="text-3xl text-gray-500 font-bold">Settings</span>
-        </button>
+          <ArrowLeft className="h-5 w-5 group-hover:transform group-hover:-translate-x-1 transition-transform duration-200" />
+          <span className="font-medium">Torna alla Home</span>
+        </Link>
+      </div>
+      
+      <div className="flex items-center mb-6">
+        <span className="text-3xl text-gray-700 font-bold">Impostazioni</span>
       </div>
       
       <Tabs
@@ -94,22 +103,22 @@ export default function SettingsPage() {
         <TabsList className="grid grid-cols-4 mb-8">
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <User size={16} />
-            <span className="hidden sm:inline">Profile</span>
+            <span className="hidden sm:inline">Profilo</span>
           </TabsTrigger>
           <TabsTrigger value="api" className="flex items-center gap-2">
             <Key size={16} />
-            <span className="hidden sm:inline">API Keys</span>
+            <span className="hidden sm:inline">Chiavi API</span>
           </TabsTrigger>
           <TabsTrigger value="favorites" className="flex items-center gap-2">
             <LinkIcon size={16} />
-            <span className="hidden sm:inline">Favorites</span>
+            <span className="hidden sm:inline">Preferiti</span>
           </TabsTrigger>
           <TabsTrigger value="stats" className="flex items-center gap-2">
             <BarChart size={16} />
-            <span className="hidden sm:inline">Statistics</span>
+            <span className="hidden sm:inline">Statistiche</span>
           </TabsTrigger>
         </TabsList>
-
+  
         <motion.div
           key={activeTab}
           initial={{ opacity: 0, x: 20 }}
@@ -120,11 +129,11 @@ export default function SettingsPage() {
           <TabsContent value="profile" className="mt-0">
             <ProfileSection />
           </TabsContent>
-
+  
           <TabsContent value="api" className="mt-0">
             <ApiKeySection currentApiKey={userData.apiToken} />
           </TabsContent>
-
+  
           <TabsContent value="favorites" className="mt-0">
             {isLoading ? (
               <div className="p-12 text-center">
@@ -138,7 +147,7 @@ export default function SettingsPage() {
               <FavoritesSection favoriteSources={userData.favoriteSources} />
             )}
           </TabsContent>
-
+  
           <TabsContent value="stats" className="mt-0">
             <StatsSection />
           </TabsContent>

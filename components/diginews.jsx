@@ -307,7 +307,7 @@ export default function DigiNews() {
                     <button
                       onClick={async (e) => {
                         e.preventDefault();
-                        const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000/'}api/favorite_sources/store`, {user_id: userData.id, source: item.source }, {
+                        const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}api/favorite_sources/store`, {user_id: userData.id, source: item.source }, {
                           headers: { 'Authorization': `Bearer ${authToken}` },
                         });
                         response.data.type && response.data.type === 'success' && toast.success(response.data.message, { style: { backgroundColor: '#34C759', color: 'white' } });
