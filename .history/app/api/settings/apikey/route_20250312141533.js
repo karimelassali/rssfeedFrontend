@@ -15,8 +15,7 @@ export async function PUT(request) {
       return NextResponse.json({ message: "API key is required" }, { status: 400 });
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL;
-    const url = `${baseUrl}/api/settings/setApiKey/`;
+    const url = `api/settings/setApiKey/`;
     console.log("Requesting URL:", url); // Debug the URL
 
     const response = await axios.put(
