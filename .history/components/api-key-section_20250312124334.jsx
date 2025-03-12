@@ -16,39 +16,29 @@ export default function ApiKeySection({currentApiKey}) {
   const [showKey, setShowKey] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
   const [isError, setIsError] = useState(false)
-  const [message, setMessage] = useState("")
+  const [errorMessage, setErrorMessage] = useState("")
   const isKeyChanged = apiKey !== currentApiKey
 
   const handleSave = async () => {
     try {
-      const response = await axios.put('/api/settings/apikey', {
-        api_key: apiKey  // API key is already being sent in the request body
+      const response = await axios.put("/api/settings/apikey", {
+        api_key: apiKey
       }, {
-        withCredentials: true,
-        headers: {
-          'Content-Type': 'application/json'
-        }
+        withCredentials: true
       })
 
       if (response.status === 200) {
         setIsSaved(true)
         setIsError(false)
-        setMessage(response.data.message)
-        setTimeout(() => {
-          setIsSaved(false)
-          setMessage("")
-        }, 3000)
+        setTimeout(() => setIsSaved(false), 3000)
       }
     } catch (error) {
       setIsError(true)
-      setMessage(error.response?.data?.message || "Failed to update API key")
-      setTimeout(() => {
-        setIsError(false)
-        setMessage("")
-      }, 3000)
+      setErrorMessage(error.response?.data?.message || "Failed to update API key")
+      setTimeout(() => setIsError(false), 3000)
     }
   }
-    
+
   return (
     <Card>
       <CardHeader>
@@ -56,24 +46,24 @@ export default function ApiKeySection({currentApiKey}) {
         <CardDescription>Add your AI API key to enable advanced features</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {isSaved && message && (
+        {isSaved && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}>
             <Alert className="bg-[#22C55E]/10 border-[#22C55E] text-[#0F2A43]">
-              <AlertDescription>{message}</AlertDescription>
+              <AlertDescription>Your API key has been saved successfully!</AlertDescription>
             </Alert>
           </motion.div>
         )}
 
-        {isError && message && (
+        {isError && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}>
             <Alert className="bg-red-100 border-red-400 text-red-700">
-              <AlertDescription>{message}</AlertDescription>
+              <AlertDescription>{errorMessage}</AlertDescription>
             </Alert>
           </motion.div>
         )}

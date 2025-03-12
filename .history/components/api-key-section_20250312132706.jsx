@@ -22,12 +22,11 @@ export default function ApiKeySection({currentApiKey}) {
   const handleSave = async () => {
     try {
       const response = await axios.put('/api/settings/apikey', {
-        api_key: apiKey  // API key is already being sent in the request body
-      }, {
         withCredentials: true,
         headers: {
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
+        body:
       })
 
       if (response.status === 200) {
@@ -48,7 +47,7 @@ export default function ApiKeySection({currentApiKey}) {
       }, 3000)
     }
   }
-    
+
   return (
     <Card>
       <CardHeader>

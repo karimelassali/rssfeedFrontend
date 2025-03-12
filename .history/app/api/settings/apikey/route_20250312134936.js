@@ -1,29 +1,35 @@
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import axios from "axios";
 
 export async function PUT(request) {
   try {
     const authToken = request.cookies.get("authToken")?.value;
+
     if (!authToken) {
-      return NextResponse.json({ message: "Authentication required" }, { status: 401 });
+      return NextResponse.json(
+        { message: "Authentication required" },
+        { status: 401 }
+      );
     }
 
     const body = await request.json();
     const { api_key } = body;
 
     if (!api_key) {
-      return NextResponse.json({ message: "API key is required" }, { status: 400 });
+      return NextResponse.json(
+        { message: "API key is required" },
+        { status: 400 }
+      );
     }
 
-    const url = `http://localhost:8000/api/settings/setApiKey/`;
-    console.log("Requesting URL:", url); // Debug the URL
-
     const response = await axios.put(
-      url,
-      { api_key },
+      `${process.env.NEXT_PUBLIC_API_URL}/api/settings/setApiKey/`,
+      { api_key }, // Wrap the api_key in an object
       {
-        headers: { Authorization: `Bearer ${authToken}` },
-        timeout: 5000, // Fail after 5 seconds
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
       }
     );
 
