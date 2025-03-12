@@ -8,7 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import axios from "axios";
 import { Loader2 } from "lucide-react";
 
-export function ImageUploadModal({ open, onOpenChange, onImageSelect }) {
+export function ImageUploadModal({ open, onOpenChange,  onImageSelect }) {
   const fileInputRef = React.useRef(null);
   const [wordpressImages, setWordPressImages] = React.useState([]);
   const [filteredImages, setFilteredImages] = React.useState([]);
