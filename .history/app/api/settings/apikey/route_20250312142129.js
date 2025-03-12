@@ -15,7 +15,7 @@ export async function PUT(request) {
       return NextResponse.json({ message: "API key is required" }, { status: 400 });
     }
 
-    const baseUrl = 'https://rssfeed-frontend.vercel.app/';
+    const baseUrl = ;
     const url = `${baseUrl}/api/settings/setApiKey/`;
     console.log("Requesting URL:", url); // Debug the URL
 
