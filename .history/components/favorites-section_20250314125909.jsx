@@ -28,7 +28,6 @@ export default function FavoritesSection({ favoriteSources }) {
   // State for delete confirmation dialog
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [favoriteToDelete, setFavoriteToDelete] = useState(null)
-  const [isDeletingSource, setIsDeletingSource] = useState(false)
 
   useEffect(() => {
     if (favoriteSources) {
@@ -63,35 +62,32 @@ export default function FavoritesSection({ favoriteSources }) {
   const confirmDelete = async () => {
     if (!favoriteToDelete) return
     
-    setIsDeletingSource(true)
     try {
-      const response = await fetch(`/api/favorite_sources/delete`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}api/favorite_sources/delete`, {
         method: 'DELETE',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           source_id: favoriteToDelete.id
         })
-      })
+      });
 
       if (response.ok) {
         // Remove from local state after successful API call
         removeFavorite(favoriteToDelete.id)
-        setMessage(`Source removed from favorites`)
       } else {
         const errorData = await response.json()
         console.error('Failed to delete favorite:', errorData)
-        setMessage(errorData.message || 'Failed to remove source from favorites')
+        setMessage(errorData.message || 'Failed to delete favorite source')
       }
     } catch (error) {
       console.error("Error deleting favorite:", error)
-      // You could display an error message here
+      setMessage('An error occurred while deleting the favorite source')
     } finally {
       // Close the dialog and reset the selected favorite
       setIsDeleteDialogOpen(false)
       setFavoriteToDelete(null)
-      setIsDeletingSource(false)
     }
   }
 
@@ -234,19 +230,9 @@ export default function FavoritesSection({ favoriteSources }) {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
-              className="bg-red-500 hover:bg-red-600 text-white relative"
-              disabled={isDeletingSource}
+              className="bg-red-500 hover:bg-red-600 text-white"
             >
-              {isDeletingSource ? (
-                <>
-                  <span className="opacity-0">Delete</span>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  </div>
-                </>
-              ) : (
-                'Delete'
-              )}
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

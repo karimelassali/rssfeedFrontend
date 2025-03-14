@@ -300,6 +300,9 @@ export default function DigiNews() {
                   </h2>
                   <div className="flex items-center gap-2">
                     {item.pubDate && <time className="text-xs text-gray-500">{getTimeDifference(item.pubDate)}</time>}
+                    {item.isPublished == 1 && (
+                      <span className="bg-green-100 text-green-600 px-2 py-0.5 rounded-full text-xs font-medium">Pubblicato</span>
+                    )}
                   </div>
                 </div>
                 {!item.isPublished && (
@@ -353,7 +356,7 @@ export default function DigiNews() {
                                     });
                                   }
                                 }}
-                                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                                className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors"
                               >
                                 Conferma
                               </button>
@@ -470,13 +473,13 @@ export default function DigiNews() {
           <motion.button
             whileHover={{ scale: 1.03 }}
             onClick={() => setIsUserMenuOpen(prev => !prev)}
-            className="w-full flex items-center justify-center sm:justify-start gap-2 px-4 py-2 bg-green-500 border border-green-200 rounded-lg text-green-600 font-medium hover:bg-green-100 transition-all"
+            className="w-full flex items-center justify-center sm:justify-start gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-lg text-green-600 font-medium hover:bg-green-100 transition-all"
           >
             <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-medium">
               {/* {userEmail?.[0]?.toUpperCase() || 'U'} */}
               <User className="h-6 w-6" />
             </div>
-            <span className="hidden sm:inline text-white truncate max-w-[120px]">{userEmail}</span>
+            <span className="hidden sm:inline truncate max-w-[120px]">{userEmail}</span>
           </motion.button>
           <AnimatePresence>
             {isUserMenuOpen && (
