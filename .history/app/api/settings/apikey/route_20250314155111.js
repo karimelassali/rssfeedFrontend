@@ -19,7 +19,7 @@ export async function PUT(request) {
     const url = `${baseUrl}/api/settings/setApiKey/`;
     console.log("Requesting URL:", url); // Debug the URL
 
-    const response = await axios.post(
+    const response = await axios.post()
       url,
       { api_key },
       {

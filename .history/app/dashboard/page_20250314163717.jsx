@@ -48,7 +48,6 @@ export default function Dashboard({ isHomepage = true }) {
   const [postToDelete, setPostToDelete] = useState(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
-  const [deletingSourceId, setDeletingSourceId] = useState(null)
   
   // Map API publishType values to UI display values
   const mapPublishType = (type) => {
@@ -250,12 +249,7 @@ export default function Dashboard({ isHomepage = true }) {
   // Render post card based on status
   const renderPostCard = (post) => {
     return (
-      <Card className={`overflow-hidden h-full flex flex-col hover:shadow-md transition-shadow relative ${deletingSourceId === post.id ? 'opacity-50' : ''}`}>
-        {deletingSourceId === post.id && (
-          <div className="absolute inset-0 flex items-center justify-center bg-white/80 rounded-lg z-10">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#22C55E] border-t-transparent" />
-          </div>
-        )}
+      <Card className="overflow-hidden h-full flex flex-col hover:shadow-md transition-shadow">
         <CardContent className="p-0 flex flex-col h-full">
           {/* Article Image */}
           <div className="w-full h-48 overflow-hidden">
@@ -540,7 +534,6 @@ export default function Dashboard({ isHomepage = true }) {
                   if (!postToDelete) return
                   
                   setIsDeleting(true)
-                  setDeletingSourceId(postToDelete.id)
                   try {
                     const response = await fetch(`/api/articles/${postToDelete.id}`, {
                       method: 'DELETE',
@@ -570,7 +563,6 @@ export default function Dashboard({ isHomepage = true }) {
                     })
                   } finally {
                     setIsDeleting(false)
-                    setDeletingSourceId(null)
                   }
                 }}
               >

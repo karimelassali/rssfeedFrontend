@@ -17,16 +17,6 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
 
 // Define our color scheme
 const colors = {
@@ -45,10 +35,6 @@ export default function Dashboard({ isHomepage = true }) {
   const [error, setError] = useState(null)
   const [draggedItem, setDraggedItem] = useState(null)
   const [draggedOverItem, setDraggedOverItem] = useState(null)
-  const [postToDelete, setPostToDelete] = useState(null)
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [deletingSourceId, setDeletingSourceId] = useState(null)
   
   // Map API publishType values to UI display values
   const mapPublishType = (type) => {
@@ -250,12 +236,7 @@ export default function Dashboard({ isHomepage = true }) {
   // Render post card based on status
   const renderPostCard = (post) => {
     return (
-      <Card className={`overflow-hidden h-full flex flex-col hover:shadow-md transition-shadow relative ${deletingSourceId === post.id ? 'opacity-50' : ''}`}>
-        {deletingSourceId === post.id && (
-          <div className="absolute inset-0 flex items-center justify-center bg-white/80 rounded-lg z-10">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#22C55E] border-t-transparent" />
-          </div>
-        )}
+      <Card className="overflow-hidden h-full flex flex-col hover:shadow-md transition-shadow">
         <CardContent className="p-0 flex flex-col h-full">
           {/* Article Image */}
           <div className="w-full h-48 overflow-hidden">
@@ -280,15 +261,7 @@ export default function Dashboard({ isHomepage = true }) {
                   <DropdownMenuLabel>Actions</DropdownMenuLabel>
                   <DropdownMenuItem>Edit post</DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    className="text-destructive"
-                    onClick={() => {
-                      setPostToDelete(post)
-                      setIsDeleteDialogOpen(true)
-                    }}
-                  >
-                    Delete post
-                  </DropdownMenuItem>
+                  <DropdownMenuItem className="text-destructive">Delete post</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -367,15 +340,7 @@ export default function Dashboard({ isHomepage = true }) {
                   <DropdownMenuItem>Edit post</DropdownMenuItem>
                   <DropdownMenuItem>Reschedule</DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    className="text-destructive"
-                    onClick={() => {
-                      setPostToDelete(post)
-                      setIsDeleteDialogOpen(true)
-                    }}
-                  >
-                    Delete post
-                  </DropdownMenuItem>
+                  <DropdownMenuItem className="text-destructive">Delete post</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -520,74 +485,6 @@ export default function Dashboard({ isHomepage = true }) {
             </>
           )}
         </AnimatePresence>
-
-        {/* Delete Confirmation Dialog */}
-        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure you want to delete this post?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete the post
-                and remove it from our servers.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
-                disabled={isDeleting}
-                onClick={async () => {
-                  if (!postToDelete) return
-                  
-                  setIsDeleting(true)
-                  setDeletingSourceId(postToDelete.id)
-                  try {
-                    const response = await fetch(`/api/articles/${postToDelete.id}`, {
-                      method: 'DELETE',
-                      headers: {
-                        'Content-Type': 'application/json',
-                      },
-                    })
-
-                    if (!response.ok) {
-                      throw new Error('Failed to delete post')
-                    }
-
-                    // Remove the deleted post from the state
-                    setPosts(posts.filter(p => p.id !== postToDelete.id))
-                    setIsDeleteDialogOpen(false)
-                    setPostToDelete(null)
-                    toast.success('Post deleted successfully', {
-                      position: "bottom-right",
-                      duration: 2000,
-                      style: { backgroundColor: '#22C55E', color: 'white' }
-                    })
-                  } catch (error) {
-                    console.error('Error deleting post:', error)
-                    toast.error('Failed to delete post', {
-                      position: "bottom-right",
-                      duration: 2000
-                    })
-                  } finally {
-                    setIsDeleting(false)
-                    setDeletingSourceId(null)
-                  }
-                }}
-              >
-                {isDeleting ? (
-                  <>
-                    <span className="opacity-0">Delete</span>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    </div>
-                  </>
-                ) : (
-                  'Delete'
-                )}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       </div>
     </div>
   )

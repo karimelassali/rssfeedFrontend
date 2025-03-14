@@ -48,7 +48,6 @@ export default function Dashboard({ isHomepage = true }) {
   const [postToDelete, setPostToDelete] = useState(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
-  const [deletingSourceId, setDeletingSourceId] = useState(null)
   
   // Map API publishType values to UI display values
   const mapPublishType = (type) => {
@@ -540,7 +539,6 @@ export default function Dashboard({ isHomepage = true }) {
                   if (!postToDelete) return
                   
                   setIsDeleting(true)
-                  setDeletingSourceId(postToDelete.id)
                   try {
                     const response = await fetch(`/api/articles/${postToDelete.id}`, {
                       method: 'DELETE',
@@ -570,7 +568,6 @@ export default function Dashboard({ isHomepage = true }) {
                     })
                   } finally {
                     setIsDeleting(false)
-                    setDeletingSourceId(null)
                   }
                 }}
               >

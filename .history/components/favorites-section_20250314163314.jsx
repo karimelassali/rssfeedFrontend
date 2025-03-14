@@ -177,7 +177,7 @@ export default function FavoritesSection({ favoriteSources }) {
                       <div className="absolute inset-0 flex items-center justify-center bg-white/80 rounded-lg z-10">
                         <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#22C55E] border-t-transparent" />
                       </div>
-                    )}
+                    )} >
 
                     <div className="flex flex-col">
                       <div className="flex items-center gap-2">

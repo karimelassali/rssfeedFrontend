@@ -17,16 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 
 // Define our color scheme
 const colors = {
@@ -45,10 +36,6 @@ export default function Dashboard({ isHomepage = true }) {
   const [error, setError] = useState(null)
   const [draggedItem, setDraggedItem] = useState(null)
   const [draggedOverItem, setDraggedOverItem] = useState(null)
-  const [postToDelete, setPostToDelete] = useState(null)
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [deletingSourceId, setDeletingSourceId] = useState(null)
   
   // Map API publishType values to UI display values
   const mapPublishType = (type) => {
@@ -248,14 +235,10 @@ export default function Dashboard({ isHomepage = true }) {
   }
 
   // Render post card based on status
-  const renderPostCard = (post) => {
+// Render post card component with post data
+function PostCard(post) {
     return (
-      <Card className={`overflow-hidden h-full flex flex-col hover:shadow-md transition-shadow relative ${deletingSourceId === post.id ? 'opacity-50' : ''}`}>
-        {deletingSourceId === post.id && (
-          <div className="absolute inset-0 flex items-center justify-center bg-white/80 rounded-lg z-10">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#22C55E] border-t-transparent" />
-          </div>
-        )}
+      <Card className="overflow-hidden h-full flex flex-col hover:shadow-md transition-shadow">
         <CardContent className="p-0 flex flex-col h-full">
           {/* Article Image */}
           <div className="w-full h-48 overflow-hidden">
@@ -282,10 +265,7 @@ export default function Dashboard({ isHomepage = true }) {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
                     className="text-destructive"
-                    onClick={() => {
-                      setPostToDelete(post)
-                      setIsDeleteDialogOpen(true)
-                    }}
+                    onClick={() => handleDeleteClick(post)}
                   >
                     Delete post
                   </DropdownMenuItem>
@@ -369,10 +349,7 @@ export default function Dashboard({ isHomepage = true }) {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
                     className="text-destructive"
-                    onClick={() => {
-                      setPostToDelete(post)
-                      setIsDeleteDialogOpen(true)
-                    }}
+                    onClick={() => handleDeleteClick(post)}
                   >
                     Delete post
                   </DropdownMenuItem>
@@ -520,75 +497,343 @@ export default function Dashboard({ isHomepage = true }) {
             </>
           )}
         </AnimatePresence>
-
-        {/* Delete Confirmation Dialog */}
-        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure you want to delete this post?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete the post
-                and remove it from our servers.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
-                disabled={isDeleting}
-                onClick={async () => {
-                  if (!postToDelete) return
-                  
-                  setIsDeleting(true)
-                  setDeletingSourceId(postToDelete.id)
-                  try {
-                    const response = await fetch(`/api/articles/${postToDelete.id}`, {
-                      method: 'DELETE',
-                      headers: {
-                        'Content-Type': 'application/json',
-                      },
-                    })
-
-                    if (!response.ok) {
-                      throw new Error('Failed to delete post')
-                    }
-
-                    // Remove the deleted post from the state
-                    setPosts(posts.filter(p => p.id !== postToDelete.id))
-                    setIsDeleteDialogOpen(false)
-                    setPostToDelete(null)
-                    toast.success('Post deleted successfully', {
-                      position: "bottom-right",
-                      duration: 2000,
-                      style: { backgroundColor: '#22C55E', color: 'white' }
-                    })
-                  } catch (error) {
-                    console.error('Error deleting post:', error)
-                    toast.error('Failed to delete post', {
-                      position: "bottom-right",
-                      duration: 2000
-                    })
-                  } finally {
-                    setIsDeleting(false)
-                    setDeletingSourceId(null)
-                  }
-                }}
-              >
-                {isDeleting ? (
-                  <>
-                    <span className="opacity-0">Delete</span>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    </div>
-                  </>
-                ) : (
-                  'Delete'
-                )}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       </div>
+    </div>
+  )
+
+  const [postToDelete, setPostToDelete] = useState(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  const handleDeleteClick = (post) => {
+    setPostToDelete(post)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!postToDelete) return
+
+    setIsDeleting(true)
+    try {
+      const response = await fetch(`/api/articles/delete/${postToDelete.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to delete post')
+      }
+
+      // Remove the deleted post from state
+      setPosts(posts.filter(post => post.id !== postToDelete.id))
+      setPostToDelete(null)
+    } catch (error) {
+      console.error('Error deleting post:', error)
+      setError('Failed to delete post. Please try again.')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const handleDeleteCancel = () => {
+    setPostToDelete(null)
+  }
+
+  // Update the DropdownMenuItem in renderPostCard
+  const renderPostCard = (post) => {
+    return (
+      <Card className="overflow-hidden h-full flex flex-col hover:shadow-md transition-shadow">
+        <CardContent className="p-0 flex flex-col h-full">
+          {/* Article Image */}
+          <div className="w-full h-48 overflow-hidden">
+            <img
+              src={post.image || "/placeholder.svg"}
+              alt={post.title}
+              className="w-full h-full object-cover transition-transform hover:scale-105 duration-300"
+            />
+          </div>
+
+          <div className="p-6 flex-1 flex flex-col">
+            <div className="flex justify-between items-start mb-2">
+              <StatusBadge displayPublishType={post.displayPublishType} />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <MoreHorizontal className="h-4 w-4" />
+                    <span className="sr-only">Open menu</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                  <DropdownMenuItem>Edit post</DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    className="text-destructive"
+                    onClick={() => handleDeleteClick(post)}
+                  >
+                    Delete post
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            <h3 className="text-lg font-semibold mb-2">{post.title}</h3>
+            <p className="text-muted-foreground text-sm mb-4 flex-1">{post.description || "No description available"}</p>
+
+            <div className="flex justify-between items-center mt-auto pt-4 border-t">
+              <Badge variant="outline" className="bg-[#F5F6F7]">
+                {post.category}
+              </Badge>
+              <span className="text-xs text-muted-foreground">
+                {post.displayPublishType === "published" ? "Published" : post.displayPublishType === "scheduled" ? "Scheduled" : "Failed"} on{" "}
+                {formatDate(post.publishDate)}
+              </span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // Update the DropdownMenuItem in renderScheduledPostsList
+  const renderScheduledPostsList = () => {
+    if (scheduledPosts.length === 0) {
+      return (
+        <div className="text-center py-12">
+          <h3 className="text-lg font-medium">No scheduled posts found</h3>
+          <p className="text-muted-foreground mt-1">Try creating a new scheduled post</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex flex-col gap-4">
+        {scheduledPosts.map((post, index) => (
+          <div
+            key={post.id}
+            draggable
+            onDragStart={(e) => handleDragStart(e, index)}
+            onDragOver={(e) => handleDragOver(e, index)}
+            onDrop={(e) => handleDrop(e, index)}
+            onDragEnd={handleDragEnd}
+            className={`flex items-center gap-4 bg-white rounded-lg shadow p-4 border ${
+              draggedItem === index ? "opacity-50" : ""
+            } ${draggedOverItem === index ? "border-[#22C55E] border-2" : ""}`}
+          >
+            <div className="cursor-grab active:cursor-grabbing">
+              <GripVertical className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+            </div>
+            <div className="flex-1 flex items-center gap-4">
+              <div className="w-16 h-16 rounded overflow-hidden flex-shrink-0">
+                <img
+                  src={post.image || "/placeholder.svg"}
+                  alt={post.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-medium">{post.title}</h3>
+                <div className="flex items-center gap-2 mt-1">
+                  <StatusBadge displayPublishType={post.displayPublishType} />
+                  <span className="text-xs text-muted-foreground">
+                    Scheduled for {formatDate(post.publishDate)}
+                  </span>
+                </div>
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <MoreHorizontal className="h-4 w-4" />
+                    <span className="sr-only">Open menu</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem>Edit post</DropdownMenuItem>
+                  <DropdownMenuItem>Reschedule</DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    className="text-destructive"
+                    onClick={() => handleDeleteClick(post)}
+                  >
+                    Delete post
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto py-8 px-4 max-w-7xl">
+      <div className="flex flex-col space-y-8">
+        {/* Back to Home Navigation */}
+        <div className="mb-2">
+          <Link 
+            href="/" 
+            className="inline-flex items-center gap-2 text-gray-600 hover:text-[#22C55E] transition-colors duration-200 group"
+            aria-label="Torna alla Home Pagina"
+          >
+            <ArrowLeft className="h-5 w-5 group-hover:transform group-hover:-translate-x-1 transition-transform duration-200" />
+            <span className="font-medium">Torna alla Home Pagina</span>
+          </Link>
+        </div>
+      
+        {/* Fixed Height Header to prevent shifting */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 min-h-[80px]">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Your Posts</h1>
+            <p className="text-muted-foreground mt-1">Manage and monitor all your published content</p>
+          </div>
+          {isHomepage && (
+            <Link href="/" className="bg-[#22C55E] p-2 flex items-center justify-center rounded-md hover:bg-[#22C55E]/90 text-white">
+              <Plus className="mr-2 h-4 w-4" /> Publish new post
+            </Link>
+          )}
+        </div>
+  
+        {/* Tabs and Search */}
+        <div className="grid gap-4 md:grid-cols-[1fr_300px]">
+          <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid grid-cols-4 mb-4">
+              <TabsTrigger value="all" className="data-[state=active]:bg-[#22C55E] data-[state=active]:text-white">
+                All
+              </TabsTrigger>
+              <TabsTrigger
+                value="published"
+                className="data-[state=active]:bg-[#22C55E] data-[state=active]:text-white"
+              >
+                Published
+              </TabsTrigger>
+              <TabsTrigger
+                value="scheduled"
+                className="data-[state=active]:bg-[#22C55E] data-[state=active]:text-white"
+              >
+                Scheduled
+              </TabsTrigger>
+              <TabsTrigger value="failed" className="data-[state=active]:bg-[#22C55E] data-[state=active]:text-white">
+                Failed
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+  
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search posts..."
+              className="pl-8"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
+  
+        {/* Error message */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <strong className="font-bold">Error: </strong>
+            <span className="block sm:inline">{error}</span>
+          </div>
+        )}
+  
+        {/* Posts Grid */}
+        <AnimatePresence mode="wait">
+          {isLoading ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+            >
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <Card key={i} className="overflow-hidden">
+                  <CardContent className="p-0">
+                    <div className="h-48 bg-gray-200 animate-pulse"></div>
+                    <div className="p-6 space-y-4 animate-pulse">
+                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                      <div className="space-y-2">
+                        <div className="h-3 bg-gray-200 rounded"></div>
+                        <div className="h-3 bg-gray-200 rounded w-5/6"></div>
+                      </div>
+                      <div className="flex justify-between items-center pt-4">
+                        <div className="h-8 w-24 bg-gray-200 rounded"></div>
+                        <div className="h-4 w-24 bg-gray-200 rounded"></div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </motion.div>
+          ) : (
+            <>
+              {activeTab === "scheduled" ? (
+                renderScheduledPostsList()
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+                >
+                  {filteredPosts.length === 0 ? (
+                    <div className="col-span-full text-center py-12">
+                      <h3 className="text-lg font-medium">No posts found</h3>
+                      <p className="text-muted-foreground mt-1">Try adjusting your search criteria</p>
+                    </div>
+                  ) : (
+                    filteredPosts.map((post) => (
+                      <motion.div
+                        key={post.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                        layout
+                      >
+                        {renderPostCard(post)}
+                      </motion.div>
+                    ))
+                  )}
+                </motion.div>
+              )}
+            </>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+    {/* Delete Confirmation Dialog */}
+    <AlertDialog open={!!postToDelete} onOpenChange={() => !isDeleting && setPostToDelete(null)}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the post
+              {postToDelete?.title && ` "${postToDelete.title}"`}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleDeleteCancel} disabled={isDeleting}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

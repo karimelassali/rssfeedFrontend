@@ -15,11 +15,11 @@ export async function PUT(request) {
       return NextResponse.json({ message: "API key is required" }, { status: 400 });
     }
 
-    const baseUrl = 'localhost:3000/';
+    const baseUrl = 'l
     const url = `${baseUrl}/api/settings/setApiKey/`;
     console.log("Requesting URL:", url); // Debug the URL
 
-    const response = await axios.post(
+    const response = await axios.put(
       url,
       { api_key },
       {
