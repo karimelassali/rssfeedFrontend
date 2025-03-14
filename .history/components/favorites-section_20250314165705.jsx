@@ -172,7 +172,13 @@ export default function FavoritesSection({ favoriteSources }) {
                   transition={{ duration: 0.2 }}
                   className="overflow-hidden">
                   <div
-                    className={`flex items-center justify-between p-4 rounded-lg border border-[#0F2A43]/10 hover:border-[#22C55E]/50 hover:bg-green-50/30 transition-all shadow-sm ${deletingSourceId === favorite.id ? 'opacity-50' : ''}`}>
+                    className={`flex items-center justify-between p-4 rounded-lg border border-[#0F2A43]/10 hover:border-[#22C55E]/50 hover:bg-green-50/30 transition-all shadow-sm relative ${deletingSourceId === favorite.id ? 'opacity-50' : ''}`}>
+                    {deletingSourceId === favorite.id && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-white/80 rounded-lg z-10">
+                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#22C55E] border-t-transparent" />
+                      </div>
+                    )}>
+
                     <div className="flex flex-col">
                       <div className="flex items-center gap-2">
                         <h3 className="font-medium">{favorite.source}</h3>
