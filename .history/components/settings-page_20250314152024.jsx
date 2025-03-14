@@ -56,11 +56,12 @@ export default function SettingsPage() {
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_API_URL}api/favorite_sources/fetch`,
         {
-          headers: {
-            "Content-Type": "application/json",
-            'Authorization': `Bearer ${authToken}`
-          }
-        }
+          user_id: user.id,
+        },
+        Headers, {
+          "Content-Type": "application/json",
+          'Authorization': `Bearer ${authToken}`
+        },
       );
       
       // Pass the complete response data - it includes both message and sources

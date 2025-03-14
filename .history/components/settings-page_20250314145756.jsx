@@ -23,22 +23,15 @@ export default function SettingsPage() {
     apiToken: '',
     favoriteSources: null, // Initialize as null to handle loading state
   });
-  const [authToken, setAuthToken] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
   const router = useRouter();
 
   useEffect(() => {
     const info = Cookies.get("user");
-    const authToken = Cookies.get("authToken");
     if (info) {
       setUser(JSON.parse(info));
     }
-    if (authToken) {
-      setAuthToken(authToken);
-      console.log(authToken);
-    }
-
   }, []);
 
   useEffect(() => {
@@ -56,11 +49,9 @@ export default function SettingsPage() {
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_API_URL}api/favorite_sources/fetch`,
         {
-          headers: {
-            "Content-Type": "application/json",
-            'Authorization': `Bearer ${authToken}`
-          }
+          user_id: user.id,
         }
+        Hea
       );
       
       // Pass the complete response data - it includes both message and sources

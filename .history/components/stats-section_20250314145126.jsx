@@ -16,57 +16,41 @@ export default function StatsSection() {
     // If we already have data, don't fetch again
     if (hasData) return;
 
-    let retries = 3;
-    let attempt = 0;
+    try {
+      // Get auth token from cookie
+      const authToken = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('authToken='))
+        ?.split('=')[1];
 
-    while (attempt < retries) {
-      try {
-        // Get auth token from cookie
-        const authToken = document.cookie
-          .split('; ')
-          .find(row => row.startsWith('authToken='))
-          ?.split('=')[1];
-
-        if (!authToken) {
-          throw new Error('Authentication token not found');
-        }
-
-        const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}api/settings/statistics`, 
-          {
-            headers: {
-              Authorization: `Bearer ${authToken}`
-            },
-            withCredentials: true,
-            timeout: 15000 // Increased timeout to 15 seconds
-          }
-        );
-        
-        if (response.status === 200 && response.data) {
-          setStatistics(response.data);
-          setError(null);
-          setHasData(true); // Mark that we have received data
-          break; // Success, exit retry loop
-        } else {
-          throw new Error('Invalid response from server');
-        }
-      } catch (err) {
-        attempt++;
-        console.error(`Error fetching statistics (attempt ${attempt}/${retries}):`, err);
-        
-        if (err.code === 'ECONNABORTED') {
-          setError('Request timed out. Please check your connection and try again.');
-        } else if (attempt === retries) {
-          setError(err.response?.data?.message || 'Failed to load statistics after multiple attempts');
-        } else {
-          // Wait before retrying (exponential backoff)
-          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
-          continue;
-        }
+      if (!authToken) {
+        throw new Error('Authentication token not found');
       }
+
+      const response = await axios.get(
+        `http://localhost:8000/api/settings/statistics`, 
+        {
+          headers: {
+            Authorization: `Bearer ${authToken}`
+          },
+          withCredentials: true,
+          timeout: 5000 // Add timeout to prevent infinite loading
+        }
+      );
+        
+      if (response.status === 200 && response.data) {
+        setStatistics(response.data);
+        setError(null);
+        setHasData(true); // Mark that we have received data
+      } else {
+        throw new Error('Invalid response from server');
+      }
+    } catch (err) {
+      console.error('Error fetching statistics:', err);
+      setError(err.response?.data?.message || 'Failed to load statistics');
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   }, [hasData]); // Only recreate the callback if hasData changes
 
   useEffect(() => {
@@ -176,4 +160,5 @@ export default function StatsSection() {
     </Card>
   );
 }
+
 
