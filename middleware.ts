@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
   // Get the user cookie
-  const userCookie = request.cookies.get('user');
+  const userCookie = request.cookies.get('authToken');
 
   // Define paths that should be protected
   const protectedPaths = [
