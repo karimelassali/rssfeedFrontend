@@ -185,56 +185,7 @@ export default function DigiNews() {
   const getDomainFromUrl = (url) => url && typeof url === 'string' ? new URL(url).hostname.replace('www.', '') : '';
   const getFavicon = (url) => url == 'https://appweb.regione.vda.it/DBWeb/Comunicati.nsf/RSScomunicati.xml' ? 'https://cdn-icons-png.flaticon.com/128/4552/4552937.png' : `https://www.google.com/s2/favicons?domain=${getDomainFromUrl(url)}&sz=128`;
 
-const getTimeDifference = (pubDate) => {
-  // Handle invalid date input
-  if (!pubDate) return 'Data non disponibile';
   
-  const now = new Date();
-  const published = new Date(pubDate);
-  
-  // Check for invalid date parsing
-  if (isNaN(published.getTime())) return 'Data non valida';
-  
-  const diffMs = now - published;
-  const diffSeconds = Math.abs(diffMs / 1000);
-  const isFuture = published > now;
-  const prefix = isFuture ? "Fra " : "";
-  
-  // Utility functions
-  const padZero = (num) => String(num).padStart(2, '0');
-  const formatDateTime = (date) => {
-    return `${padZero(date.getDate())}/${padZero(date.getMonth() + 1)}/${date.getFullYear()} alle ${padZero(date.getHours())}:${padZero(date.getMinutes())}`;
-  };
-  
-  // Calculate time units
-  const minutes = Math.floor(diffSeconds / 60);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-  const remainingMinutes = minutes % 60;
-  
-  // Check if date is today
-  const isToday = now.toDateString() === published.toDateString();
-  const dateTimeString = formatDateTime(published);
-  
-  // Format time difference based on elapsed time
-  if (diffSeconds < 60) {
-    const seconds = Math.floor(diffSeconds);
-    return `${prefix}${seconds} second${seconds !== 1 ? 'i' : 'o'}${isFuture ? "" : " fa"} (${isToday ? "oggi" : dateTimeString})`;
-  }
-  
-  if (isToday) {
-    if (hours > 0) {
-      return `${prefix}${hours} or${hours === 1 ? 'a' : 'e'}${remainingMinutes > 0 ? ` e ${remainingMinutes} minut${remainingMinutes === 1 ? 'o' : 'i'}` : ""}${isFuture ? "" : " fa"}`;
-    }
-    return `${prefix}${minutes} minut${minutes === 1 ? 'o' : 'i'}${isFuture ? "" : " fa"}`;
-  }
-  
-  if (days < 7) {
-    return `${prefix}${days} giorn${days === 1 ? 'o' : 'i'}${isFuture ? "" : " fa"}`;
-  }
-  
-  return dateTimeString;
-};
 
   const SourceIcon = ({ source }) => {
     const domain = getDomainFromUrl(source);
@@ -378,7 +329,7 @@ const getTimeDifference = (pubDate) => {
                 <motion.button
                   initial={{ opacity: 0, scale: 0 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0 }}
+                  exit={{ opacity: 0 }}
                   onClick={handleClearSearch}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors"
                 >
