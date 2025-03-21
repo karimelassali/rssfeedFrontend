@@ -329,7 +329,7 @@ export default function DigiNews() {
         transition={{ duration: 0.5 }}
         className="sticky top-0 z-10 bg-white/80 backdrop-blur-md rounded-b-xl p-4"
       >
-        <div className="container w-full md:w-[50%] mx-auto">
+        <div className="container w">
           <div className="bg-white rounded-xl shadow-md w-full mx-auto flex flex-col gap-4 p-4">
             {/* Barra di ricerca a larghezza piena */}
             <div className="relative w-full">
@@ -363,7 +363,7 @@ export default function DigiNews() {
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => setIsFilterOpen(true)}
-                className="relative flex items-center justify-center flex-1 px-4 py-2.5 bg-green-500 text-white rounded-lg shadow hover:bg-green-600 transition-all min-w-[100px]"
+                className="relative flex items-center justify-center flex-1 px-4 py-2.5 bg-green-500 text-white rounded-lg shadow hover:bg-green-600 transition-all"
               >
                 <Filter className="h-5 w-5 text-white" />
                 <span className="ml-2 font-medium">Filtri</span>
@@ -374,14 +374,14 @@ export default function DigiNews() {
                 )}
               </motion.button>
               {authToken ? (
-                <div className="relative flex-1 min-w-[120px]" ref={userMenuRef}>
+                <div className="relative flex-1" ref={userMenuRef}>
                   <motion.button
                     whileHover={{ scale: 1.03 }}
                     onClick={() => setIsUserMenuOpen(prev => !prev)}
                     className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all"
                   >
-                    <User className="h-6 w-6 text-white flex-shrink-0" />
-                    <span className="truncate max-w-[100px]">{userData?.name || 'Utente'}</span>
+                    <User className="h-6 w-6 text-white" />
+                    <span className="truncate">{userData?.name || 'Utente'}</span>
                   </motion.button>
                   {isUserMenuOpen && (
                     <motion.div
@@ -392,7 +392,7 @@ export default function DigiNews() {
                       className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-20"
                     >
                       <div className="px-3 py-2 text-gray-600 text-sm border-b border-gray-200">
-                        <p className="font-medium truncate">{userEmail}</p>
+                        <p className="font-medium">{userEmail}</p>
                         <p className="text-xs opacity-75">Utente autenticato</p>
                       </div>
                       <Link href="/dashboard" className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-green-50 rounded-md">
@@ -411,7 +411,7 @@ export default function DigiNews() {
                   )}
                 </div>
               ) : (
-                <Link href="/sign-in" className="flex-1 px-4 py-2.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all text-center font-medium min-w-[100px]">
+                <Link href="/sign-in" className="flex-1 px-4 py-2.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all text-center font-medium">
                   Accedi
                 </Link>
               )}

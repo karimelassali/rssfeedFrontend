@@ -411,7 +411,7 @@ export default function DigiNews() {
                   )}
                 </div>
               ) : (
-                <Link href="/sign-in" className="flex-1 px-4 py-2.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all text-center font-medium min-w-[100px]">
+                <Link href="/sign-in" className="flex-1 px-4 py-2.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all text-center font-medium">
                   Accedi
                 </Link>
               )}

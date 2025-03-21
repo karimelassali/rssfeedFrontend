@@ -392,7 +392,7 @@ export default function DigiNews() {
                       className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-20"
                     >
                       <div className="px-3 py-2 text-gray-600 text-sm border-b border-gray-200">
-                        <p className="font-medium truncate">{userEmail}</p>
+                        <p className="font-medium">{userEmail}</p>
                         <p className="text-xs opacity-75">Utente autenticato</p>
                       </div>
                       <Link href="/dashboard" className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-green-50 rounded-md">
@@ -411,7 +411,7 @@ export default function DigiNews() {
                   )}
                 </div>
               ) : (
-                <Link href="/sign-in" className="flex-1 px-4 py-2.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all text-center font-medium min-w-[100px]">
+                <Link href="/sign-in" className="flex-1 px-4 py-2.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all text-center font-medium">
                   Accedi
                 </Link>
               )}
