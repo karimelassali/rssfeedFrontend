@@ -25,8 +25,8 @@ function Page() {
       // In Next.js, environment variables need to be prefixed with NEXT_PUBLIC_ to be accessible on the client side
       const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}api/sign-in`, formData);
       if (response.data.token) {
-        Cookies.set('authToken', response.data.token, {expires:7});
-        Cookies.set('user', JSON.stringify(response.data.user));
+        Cookies.set('authToken', response.data.token, {expires: 0.02083});
+        Cookies.set('user', JSON.stringify(response.data.user), {expires: 0.02083});
         router.push('/');
       } else {
         setError('Invalid credentials. Please try again.');
