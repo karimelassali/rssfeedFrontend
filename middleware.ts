@@ -2,35 +2,41 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  // Get the user cookie
-  const userCookie = request.cookies.get('authToken');
+  const authToken = request.cookies.get('authToken')?.value;
 
-  // Define paths that should be protected
+  console.log('Middleware Running - Path:', request.nextUrl.pathname);
+  console.log('Auth Token:', authToken);
+
   const protectedPaths = [
+    '/',
     '/dashboard',
     '/settings',
     '/news',
     '/publishedArticles'
   ];
 
-  // Check if the current path is a protected route
   const isProtectedRoute = protectedPaths.some(path => 
     request.nextUrl.pathname.startsWith(path)
   );
 
-  // If it's a protected route and there's no user cookie, redirect to login
-  if (isProtectedRoute && !userCookie) {
-    const loginUrl = new URL('/sign-in', request.url);
-    return NextResponse.redirect(loginUrl);
+  if (isProtectedRoute) {
+    if (!authToken || authToken.trim() === '') {
+      console.log('No valid token found, redirecting to /sign-in');
+      const loginUrl = new URL('/sign-in', request.url);
+      const response = NextResponse.redirect(loginUrl);
+      response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+      return response;
+    }
   }
 
-  // Allow the request to continue
+  console.log('Access granted, proceeding to requested page');
   return NextResponse.next();
 }
 
-// Configure which routes should trigger this middleware
+
 export const config = {
   matcher: [
+    '/',
     '/dashboard/:path*',
     '/settings/:path*',
     '/news/:path*',

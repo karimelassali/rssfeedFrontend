@@ -10,6 +10,7 @@ const inter = Inter({
   fallback: ["system-ui", "arial"]
 });
 
+// إعدادات الـ metadata بدون viewport و themeColor
 export const metadata = {
   metadataBase: new URL('https://rssfeed-frontend.vercel.app/'),
   title: {
@@ -19,8 +20,6 @@ export const metadata = {
   description: "Your trusted source for digital news and updates, delivering real-time coverage of the latest stories and events",
   keywords: ["digital news", "news updates", "latest news", "breaking news", "real-time news"],
   authors: [{ name: "Digival" }],
-  viewport: "width=device-width, initial-scale=1, maximum-scale=5",
-  themeColor: "#ffffff",
   manifest: "/manifest.json",
   robots: {
     index: true,
@@ -64,6 +63,16 @@ export const metadata = {
     }
   }
 };
+
+// نقل الـ viewport و themeColor لـ generateViewport
+export function generateViewport() {
+  return {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 5,
+    themeColor: "#ffffff"
+  };
+}
 
 import ClientLayout from "./client-layout";
 
