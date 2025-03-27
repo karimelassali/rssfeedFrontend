@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
   const authToken = request.cookies.get('authToken')?.value;
+  
 
   console.log('Middleware Running - Path:', request.nextUrl.pathname);
   console.log('Auth Token:', authToken);
@@ -10,7 +11,7 @@ export function middleware(request: NextRequest) {
   const protectedPaths = [
     '/',
     '/dashboard',
-    '/settings',
+    '/settings',  
     '/news',
     '/publishedArticles'
   ];
@@ -36,7 +37,7 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/',
+    
     '/dashboard/:path*',
     '/settings/:path*',
     '/news/:path*',
