@@ -273,8 +273,8 @@ export default function NewsArticle({ id }) {
              }}
            />
          ) : (
-           // <NoImagePlaceholder />
-           null
+           <NoImagePlaceholder />
+          //  null
          )}
        </div>
       )}
