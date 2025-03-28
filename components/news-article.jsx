@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader } from "@/components/ui/card"
-import { Edit2, ArrowLeft } from "lucide-react"
+import { Edit2, ArrowLeft, ImageOff, FileText  } from "lucide-react"
 import Image from "next/image"
 import axios from "axios"
 import { Logo } from "./ui/logo"
@@ -185,64 +185,113 @@ export default function NewsArticle({ id }) {
     }));
   };
 
+  const NoImagePlaceholder = () => {
+    return (
+      <div className="relative w-full h-64 bg-gradient-to-br from-[#F5F6F7] to-[#F5F6F7]/70 rounded-xl overflow-hidden shadow-md flex flex-col items-center justify-center text-center p-6 border border-[#0F2A43]/10">
+        <div className="absolute inset-0 opacity-10">
+          <svg 
+            className="w-full h-full text-[#0F2A43]/10" 
+            xmlns="http://www.w3.org/2000/svg" 
+            viewBox="0 0 100 100" 
+            preserveAspectRatio="none"
+          >
+            <pattern id="pattern" width="10" height="10" patternUnits="userSpaceOnUse">
+              <path d="M0 0 L10 0 L5 5 Z" className="stroke-[#0F2A43]/20" fill="none" />
+            </pattern>
+            <rect x="0" y="0" width="100" height="100" fill="url(#pattern)" />
+          </svg>
+        </div>
+        
+        <div className="relative z-10 flex flex-col items-center">
+          <div className="bg-[#0F2A43]/5 p-4 rounded-full mb-4 shadow-md">
+            <ImageOff className="w-10 h-10 text-[#0F2A43]" strokeWidth={1.5} />
+          </div>
+          
+          <h3 className="text-xl font-bold text-[#0F2A43] mb-2 tracking-tight">
+            Nessun Contenuto Visivo
+          </h3>
+          
+          <p className="text-sm text-[#0F2A43]/80 max-w-xs">
+            Questo articolo non ha un'immagine associata. Il contenuto rimane informativo e prezioso.
+          </p>
+          
+          <div className="mt-4 flex items-center text-[#0F2A43]/60 text-xs">
+            <FileText className="w-4 h-4 mr-2" strokeWidth={1.5} />
+            Articolo Solo Testo
+          </div>
+        </div>
+  
+        {/* Optional subtle error indicator */}
+        <div className="absolute bottom-0 left-0 w-full h-1 bg-red-500/30"></div>
+      </div>
+    );
+  };
+  
+
   const renderMainArticleView = () => (
     articleData.title && articleData.description ? (
       <motion.div
-        key="article"
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -20 }}
-        transition={{ duration: 0.3 }}
-        className="container mx-auto px-4 py-6 max-w-3xl"
-      >
-        <header className="mb-6">
-          <Logo />
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <span className="source-tag bg-green-100 text-green-800 px-2 py-0.5 rounded">
-              {articleData.source ? articleData.source.split('/').pop() : 'Loading...'}
-            </span>
-          </div>
-        </header>
-
-        <h2 className="text-xl font-semibold mb-3">
-          {articleData.title}
-        </h2>
-
-        <p className="text-sm text-gray-600 mb-4">
-          {new Date(articleData.pubDate).toLocaleDateString('it-IT', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-          })}
-        </p>
-        <div className="relative w-full h-64 mb-6">
-          <Image
-            src={randomImageUrl}
-            alt="Article image"
-            fill
-            className="rounded-lg object-cover"
-            onError={(e) => {
-              e.target.src = '/default-image.jpg'; // Fallback image
-            }}
-          />
+      key="article"
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -20 }}
+      transition={{ duration: 0.3 }}
+      className="container mx-auto px-4 py-6 max-w-3xl"
+    >
+      <header className="mb-6">
+        <Logo />
+        <div className="flex items-center gap-2 text-sm text-gray-600">
+          <span className="source-tag bg-green-100 text-green-800 px-2 py-0.5 rounded">
+            {articleData.source ? articleData.source.split('/').pop() : 'Loading...'}
+          </span>
         </div>
+      </header>
 
-        <div className="prose max-w-none mb-8">
-          <p className="mb-20">{articleData.description}</p>
-        </div>
+      <h2 className="text-xl font-semibold mb-3">
+        {articleData.title}
+      </h2>
 
-        <div className="fixed flex justify-center bottom-0 left-0 right-0 p-4 bg-white border-t">
-          <Button
-            onClick={toggleEdit}
-            className="w-[50%] bg-green-500 hover:bg-green-600 text-white py-4 rounded-full flex items-center justify-center gap-2 max-sm:w-full"
-          >
-            <Edit2 className="w-4 h-4" />
-            Utilizza e rielabora
-          </Button>
-        </div>
-      </motion.div>
+      <p className="text-sm text-gray-600 mb-4">
+        {new Date(articleData.pubDate).toLocaleDateString('it-IT', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        })}
+      </p>
+      {articleData.img && (
+         <div className="relative w-full h-64 mb-6">
+         {articleData.img ? (
+           <Image
+             src={articleData.img}
+             alt="Article image"
+             fill
+             className="rounded-lg object-cover"
+             onError={(e) => {
+               e.target.src = '/default-image.jpg'; // Fallback image
+             }}
+           />
+         ) : (
+           // <NoImagePlaceholder />
+           null
+         )}
+       </div>
+      )}
+      <div className="prose max-w-none mb-8">
+        <p className="mb-20">{articleData.description}</p>
+      </div>
+
+      <div className="fixed flex justify-center bottom-0 left-0 right-0 p-4 bg-white border-t">
+        <Button
+          onClick={toggleEdit}
+          className="w-[50%] bg-green-500 hover:bg-green-600 text-white py-4 rounded-full flex items-center justify-center gap-2 max-sm:w-full"
+        >
+          <Edit2 className="w-4 h-4" />
+          Utilizza e rielabora
+        </Button>
+      </div>
+    </motion.div>
     ) : (
       <ArticleSkeleton />
     )
