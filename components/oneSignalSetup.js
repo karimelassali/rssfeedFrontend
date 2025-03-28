@@ -3,6 +3,17 @@
 import { useEffect } from "react";
 import OneSignal from "react-onesignal";
 
+// Function to get OneSignal Player ID
+export const getOneSignalPlayerId = async () => {
+  try {
+    const playerId = await OneSignal.getUserId();
+    return playerId;
+  } catch (error) {
+    console.error('Error getting OneSignal Player ID:', error);
+    return null;
+  }
+};
+
 export default function OneSignalSetup() {
   useEffect(() => {
     // Initialize OneSignal when the component mounts

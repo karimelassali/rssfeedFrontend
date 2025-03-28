@@ -8,6 +8,7 @@ import { Trash2, ExternalLink, Search, LinkIcon, AlertTriangle } from "lucide-re
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import Image from "next/image"
+import { getOneSignalPlayerId } from "./oneSignalSetup"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -108,6 +109,40 @@ export default function FavoritesSection({ favoriteSources }) {
       setMessage(`${updatedFavorites.length} favorite sources found`)
       return updatedFavorites
     })
+  }
+
+  // Function to add a favorite source with OneSignal player ID
+  const addFavoriteSource = async (source) => {
+    try {
+      const playerId = await getOneSignalPlayerId();
+      const timestamp = new Date().toISOString();
+      const response = await fetch('/api/favorite', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          source: source,
+          player_id: playerId,
+          logged_at: timestamp,
+          action: 'add_favorite'
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setMessage(data.message);
+        // Refresh favorites list
+        const updatedFavorites = [...favorites, { id: Date.now(), source: source }];
+        setFavorites(updatedFavorites);
+      } else {
+        const errorData = await response.json();
+        setMessage(errorData.message || 'Failed to add source to favorites');
+      }
+    } catch (error) {
+      console.error('Error adding favorite:', error);
+      setMessage('Failed to add source to favorites');
+    }
   }
 
   const filteredFavorites = favorites.filter(favorite => 

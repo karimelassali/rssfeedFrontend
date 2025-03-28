@@ -17,7 +17,7 @@ export async function POST(request) {
     const user = JSON.parse(userCookie);
     
     // Parse the request body
-    const { source } = await request.json();
+    const { source, player_id, logged_at, action } = await request.json();
 
     if (!source) {
       return NextResponse.json({
@@ -29,7 +29,10 @@ export async function POST(request) {
     const req = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}api/favorite_sources/store/`, 
       {
         source: source,
-        user_id: user.id
+        user_id: user.id,
+        player_id: player_id,
+        logged_at: logged_at,
+        action: action
       },
       {
         headers: {
